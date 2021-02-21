@@ -459,16 +459,16 @@ void print_help(){
     printf("How to use PassMann?\n"
            "Here are all of your commands \n"
            "Meta commands: \n"
-           ".suser -> Shows you all users that can access here"
-           ".nuser -> Allows you to create new user"
-           ".btree -> Shows you the B-tree structure of your database"
-           ".constants -> Shows you the constants"
-           ".exit -> Quits the program and flushes the database"
-           ".passgen -> Generates password if you want one"
+           ".suser -> Shows you all users that can access here\n"
+           ".nuser -> Allows you to create new user\n"
+           ".btree -> Shows you the B-tree structure of your database\n"
+           ".constants -> Shows you the constants\n"
+           ".exit -> Quits the program and flushes the database\n"
+           ".passgen -> Generates password if you want one\n"
            "\n"
            "Data handling:"
-           "insert <ID> <USECASE> <USERNAME> <PASSWORD> -> Stores data into the system,"
-           "select -> Shows you your stored data into system");
+           "insert <ID> <USECASE> <USERNAME> <PASSWORD> -> Stores data into the system\n"
+           "select -> Shows you your stored data into system\n");
 }
 
 void read_input(InputBuffer* input_buffer) {

@@ -10,6 +10,3 @@ add_executable(PassMann src/main.c src/user.c src/session.c src/database.c src/h
 target_link_libraries(PassMann PUBLIC m)
 target_link_libraries(PassMann PUBLIC ssl)
 target_link_libraries(PassMann PUBLIC crypto)
-
-install(TARGETS PassMann DESTINATION deb CONFIGURATIONS Debug)
-install(TARGETS PassMann DESTINATION rel CONFIGURATIONS Release)
