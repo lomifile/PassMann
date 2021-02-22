@@ -16,6 +16,7 @@ typedef struct{
 extern Userdata userdata;
 extern User user;
 
+void strip_newline(char* s);
 char* input_username();
 char* input_password();
 void insert_session(User* user, int pos, Session* session, char* username, char* password);

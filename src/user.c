@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "user.h"
 #include "hashing.h"
+#include "session.h"
 
 void strip_nul(char* buf){
     int len;
@@ -43,11 +44,14 @@ void print_user_list(User *user) {
 }
 
 void input_user(User *user) {
-    unsigned char password[PASSWORD_MAX_CHAR];
     Userdata data;
+    char password[PASSWORD_MAX_CHAR];
+    fflush(stdin);
     printf("Input your name> ");
-    scanf(" %s", &data.name);
-    int selection = 0;
+    fgets(data.name, NAME_MAX_CHAR + 1, stdin);
+    fflush(stdin);
+    strip_newline(data.name);
+    int selection;
     do {
         printf("Do you want to use your PC username or you want a custom username? \nInput:\n(1) for PC\n(2) for custom\n");
         scanf("%d", &selection);
@@ -61,20 +65,18 @@ void input_user(User *user) {
         strcpy(data.username, getUserName());
     } else if (selection == 2) {
         printf("Input your username> ");
-        scanf(" %s", &data.username);
+        scanf("%s", data.username);
+        strip_newline(data.username);
     }
-
+    fflush(stdin);
     printf("Input password> ");
     system("stty -echo");
-
-    scanf(" %s", &data.password);
+//    fgets(password, PASSWORD_MAX_CHAR + 1 , stdin);
+    scanf("%s", password);
+    strip_newline(password);
     system("stty echo");
-
-    /**
-     * Todo: Finsih hashing password for user
-     */
-//    unsigned char* hashed = getHash(password);
-//    strcpy(data.password, hashed);
+    char* hashed = getHash(password);
+    strcpy(data.password, hashed);
 
     insert(data, user->row + 1, user);
     flush_stdin();

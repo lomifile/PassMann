@@ -11,32 +11,36 @@
 char username[USERNAME_MAX_CHAR];
 char password[PASSWORD_MAX_CHAR];
 
-void strip_null(char* buf){
-    int len;
-    buf[sizeof(buf) - 1] = '\0';
-/* compute the length, and truncate the \n if any */
-    len = strlen(buf);
-    while ( len > 0 && buf[len - 1] == '\n' )
+void strip_newline(char *s)
+{
+    while (*s != '\0')
     {
-        buf[len - 1] = '\0';
-        --len;
+        if (*s == '\r' || *s == '\n')
+        {
+            *s = '\0';
+        }
+        s++;
     }
 }
 
 char* input_username(){
+    fflush(stdin);
     printf("Input username> ");
-    scanf(" %s", &username);
+    fgets(username, USERNAME_MAX_CHAR, stdin);
+    strip_newline(username);
     return username;
 }
 
 char* input_password(){
+    fflush(stdin);
     printf("Input password> ");
     system("stty -echo");
-    scanf(" %s", &password);
-//    char* hashed = getHash(password);
+    fgets(password, PASSWORD_MAX_CHAR + 1 , stdin);
+    strip_newline(password);
+    char* hashed = getHash(password);
     system("stty echo");
     printf("\n");
-    return password;
+    return hashed;
 }
 
 void insert_session(User* user, int pos, Session* session, char* username, char* password){
@@ -81,10 +85,11 @@ int authentication(User* user, char* username, char* password){
     return 0;
 }
 
+
 int search(User* user, char* username, char* password){
     //username search
     for(int index = 0; index <= user->row; index++){
-        if(memcmp(username, user->user[index].username, strlen(username)) == 0 && memcmp(password, user->user[index].password, strlen(password)) == 0){
+        if((strcmp(user->user[index].username, username) == 0) && (strcmp(user->user[index].password, password) == 0)){
             return 1;
         }
     }

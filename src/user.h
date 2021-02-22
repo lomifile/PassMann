@@ -13,7 +13,7 @@
 typedef struct{
     char name[NAME_MAX_CHAR];
     char username[USERNAME_MAX_CHAR];
-    unsigned char password[PASSWORD_MAX_CHAR];
+    char password[PASSWORD_MAX_CHAR];
 }Userdata;
 
 typedef struct{

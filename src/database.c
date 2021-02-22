@@ -79,6 +79,12 @@ const uint32_t LEAF_NODE_RIGHT_SPLIT_COUNT = (LEAF_NODE_MAX_CELLS + 1) / 2;
 const uint32_t LEAF_NODE_LEFT_SPLIT_COUNT =
         (LEAF_NODE_MAX_CELLS + 1) - LEAF_NODE_RIGHT_SPLIT_COUNT;
 
+void print_row_encrypted(Row *row){
+    printf("%10s|%10s|%10s|%10s|\n","ID","Usecase","Username","Password");
+    printf("============================================\n");
+    printf("%10d|%10s|%10s|%10s|\n", row->id, row->usecase ,row->username, row->password);
+}
+
 void print_row(Row* row) {
     char* dec_password = decrypt_data(row->password);
     printf("%10s|%10s|%10s|%10s|\n","ID","Usecase","Username","Password");
@@ -670,6 +676,10 @@ PrepareResult prepare_statement(InputBuffer* input_buffer,
     if (strncmp(input_buffer->buffer, "insert", 6) == 0) {
         return prepare_insert(input_buffer, statement);
     }
+    if(strcmp(input_buffer->buffer,"raw") == 0){
+        statement->type = STATEMENT_SELECT_RAW;
+        return PREPARE_SUCCESS;
+    }
     if (strcmp(input_buffer->buffer, "select") == 0) {
         statement->type = STATEMENT_SELECT;
         return PREPARE_SUCCESS;
@@ -863,6 +873,20 @@ ExecuteResult execute_insert(Statement* statement, Table* table) {
     return EXECUTE_SUCCESS;
 }
 
+ExecuteResult execute_raw_select(Statement* statement, Table* table){
+    Cursor* cursor = table_start(table);
+
+    Row row;
+    while(!(cursor->end_of_table)){
+        deserialize_row(cursor_value(cursor), &row);
+        print_row_encrypted(&row);
+        cursor_advance(cursor);
+    }
+
+    free(cursor);
+    return EXECUTE_SUCCESS;
+}
+
 ExecuteResult execute_select(Statement* statement, Table* table) {
     Cursor* cursor = table_start(table);
 
@@ -884,5 +908,7 @@ ExecuteResult execute_statement(Statement* statement, Table* table) {
             return execute_insert(statement, table);
         case (STATEMENT_SELECT):
             return execute_select(statement, table);
+        case (STATEMENT_SELECT_RAW):
+            return execute_raw_select(statement, table);
     }
 }

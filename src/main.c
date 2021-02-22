@@ -54,8 +54,10 @@ void start_db(Table *table, User* user){
 }
 
 bool isAuth(User* user){
-    char *username = input_username();
-    char *password = input_password();
+    char *username =(char*) malloc(sizeof(USERNAME_MAX_CHAR));
+    username = input_username();
+    char *password = (char*)malloc(sizeof(PASSWORD_MAX_CHAR));
+    password = input_password();
     int result = authentication(user, username, password);
     if(result == 1){
         return true;
@@ -103,7 +105,7 @@ int main() {
 
     if(auth) {
         Table *table = db_open(FILENAME);
-        fflush_stdin();
+        fflush(stdin);
         start_db(table, &user);
     }
 }

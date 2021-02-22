@@ -8,9 +8,9 @@
 #include <string.h>
 #include <openssl/sha.h>
 
-char* getHash(unsigned char* string){
+char* getHash(char* string){
     unsigned char* hashed = malloc(SHA256_DIGEST_LENGTH);
-    unsigned char* hstring = (char*)malloc(sizeof(hashed));
+    char* hstring = (char*)malloc(sizeof(hashed));
     SHA256(string, strlen(string), hashed);
 
     for(int i =0; i < SHA256_DIGEST_LENGTH; i++){
