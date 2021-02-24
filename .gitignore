@@ -3,3 +3,7 @@ cmake-build-debug
 build
 database.db
 User.dat
+debug-build
+
+# That is just simple  automate script to fasten the build proccess
+build.sh 

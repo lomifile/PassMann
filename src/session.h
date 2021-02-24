@@ -4,9 +4,12 @@
 
 #ifndef PASSMANN_SESSION_H
 #define PASSMANN_SESSION_H
-#include "user.h"
 
-#define MAX_USER_SESSION 1
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#define MAX_USER_SESSION 2
 
 typedef struct{
     Userdata user[MAX_USER_SESSION];

@@ -1,12 +1,14 @@
-//
-// Created by filip on 17. 02. 2021..
-//
+/**
+ * Session
+ * 
+ * Contains all the manipulations and data fro creating a session and authenticating a user
+ * into the session.
+ *
+ * */
 
-#include <stdio.h>
 #include "session.h"
 #include "hashing.h"
-#include <string.h>
-#include <stdlib.h>
+#include "user.h"
 
 char username[USERNAME_MAX_CHAR];
 char password[PASSWORD_MAX_CHAR];
