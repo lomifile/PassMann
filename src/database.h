@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "user.h"
 
 #define TABLE_MAX_PAGES 100

@@ -1,8 +1,13 @@
 #include <stdio.h>
+#include <stdbool.h>
+
+/**
+ * Program includes
+ * */
+
 #include "main.h"
 #include "session.h"
 #include "database.h"
-#include <stdbool.h>
 
 void fflush_stdin()
 { int c; while ((c = getchar()) != '\n' && c != EOF); }

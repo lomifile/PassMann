@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.16)
 project(PassMann C)
 
 set(PROJECT_VERSION_MAJOR 1 CACHE STRING "major version" FORCE)
