@@ -621,21 +621,21 @@ MetaCommandResult do_meta_command(InputBuffer* input_buffer, Table* table, User*
         printf("Constants:\n");
         print_constants();
         return META_COMMAND_SUCCESS;
-    } else if(strcmp(input_buffer->buffer, ".nuser") == 0) {
+    } else if (strcmp(input_buffer->buffer, ".nuser") == 0) {
         input_user(user);
         save(user);
         return META_COMMAND_SUCCESS;
-    } else if(strcmp(input_buffer->buffer, ".suser") == 0){
+    } else if (strcmp(input_buffer->buffer, ".suser") == 0){
         print_user_list(user);
         return META_COMMAND_SUCCESS;
-    } else if(strcmp(input_buffer->buffer,".passgen")==0){
+    } else if (strcmp(input_buffer->buffer,".passgen")==0){
         int length;
         printf("Input length of password> ");
         scanf("%d", &length);
         randomPasswordGeneration(length);
         fflush_stdin();
         return META_COMMAND_SUCCESS;
-    } else if(strcmp(input_buffer->buffer,".help") == 0){
+    } else if (strcmp(input_buffer->buffer,".help") == 0){
         print_help();
         return META_COMMAND_SUCCESS;
     } else {

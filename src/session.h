@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "user.h"
 
 #define MAX_USER_SESSION 2
 
@@ -25,5 +26,6 @@ char* input_password();
 void insert_session(User* user, int pos, Session* session, char* username, char* password);
 int authentication(User* user, char* username,char* password);
 int search(User* user, char* username,char* password);
+void show_user_session(Session* session);
 
 #endif //PASSMANN_SESSION_H
