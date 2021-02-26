@@ -480,8 +480,6 @@ void print_help() {
     printf("How to use PassMann?\n"
            "Here are all of your commands \n"
            "Meta commands: \n"
-           ".suser -> Shows you all users that can access here\n"
-           ".nuser -> Allows you to create new user\n"
            ".btree -> Shows you the B-tree structure of your database\n"
            ".constants -> Shows you the constants\n"
            ".exit -> Quits the program and flushes the database\n"

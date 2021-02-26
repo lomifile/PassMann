@@ -5,6 +5,7 @@
  * If the user is authenticated user is stored into session and the main database
  * is starting.
  */
+
 #include <stdio.h>
 #include <stdbool.h>
 
