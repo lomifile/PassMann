@@ -1,12 +1,13 @@
-//
-// Created by filip on 17. 02. 2021..
-//
+/**
+ * Session
+ * 
+ * Contains all the manipulations and data fro creating a session and authenticating a user
+ * into the session.
+ *
+ * */
 
-#include <stdio.h>
 #include "session.h"
 #include "hashing.h"
-#include <string.h>
-#include <stdlib.h>
 
 char username[USERNAME_MAX_CHAR];
 char password[PASSWORD_MAX_CHAR];
@@ -85,7 +86,6 @@ int authentication(User* user, char* username, char* password){
     return 0;
 }
 
-
 int search(User* user, char* username, char* password){
     //username search
     for(int index = 0; index <= user->row; index++){
@@ -94,4 +94,10 @@ int search(User* user, char* username, char* password){
         }
     }
     return 0;
+}
+
+void show_user_session(Session *session){
+    for(int index = 0; index<MAX_USER_SESSION;index++){
+        printf("User in session: %s\n", session->user[index].username);
+    }
 }

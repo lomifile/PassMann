@@ -1,12 +1,12 @@
-//
-// Created by filip on 17. 02. 2021..
-//
+/**
+ * Hashing
+ * 
+ * Contains function that hashes a string, mostly used for passwords
+ * 
+ * */
 
 #include "hashing.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <openssl/sha.h>
+
 
 char* getHash(char* string){
     unsigned char* hashed = malloc(SHA256_DIGEST_LENGTH);

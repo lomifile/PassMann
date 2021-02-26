@@ -5,6 +5,11 @@
 #ifndef PASSMANN_USER_H
 #define PASSMANN_USER_H
 
+#include <string.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <pwd.h>
+
 #define NAME_MAX_CHAR 150
 #define USERNAME_MAX_CHAR 255
 #define PASSWORD_MAX_CHAR 255

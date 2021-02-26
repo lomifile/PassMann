@@ -1,9 +1,16 @@
-//
-// Created by filip on 17. 02. 2021..
-//
+/**
+ * Database
+ * 
+ * This is main database suroce with all manipulations for storing data into database
+ * Database can be saved to files and stored for safety.
+ * 
+ * TODO:
+ *  1.Need to create function and command to retrive that file
+ *  2.Need to create logging
+ *
+ **/
 
-#include <time.h>
-#include <stdlib.h>
+
 #include "main.h"
 #include "database.h"
 #include "encryption.h"
@@ -80,14 +87,12 @@ const uint32_t LEAF_NODE_LEFT_SPLIT_COUNT =
         (LEAF_NODE_MAX_CELLS + 1) - LEAF_NODE_RIGHT_SPLIT_COUNT;
 
 void print_row_encrypted(Row *row){
-    printf("%10s|%10s|%10s|%10s|\n","ID","Usecase","Username","Password");
     printf("============================================\n");
     printf("%10d|%10s|%10s|%10s|\n", row->id, row->usecase ,row->username, row->password);
 }
 
 void print_row(Row* row) {
     char* dec_password = decrypt_data(row->password);
-    printf("%10s|%10s|%10s|%10s|\n","ID","Usecase","Username","Password");
     printf("============================================\n");
     printf("%10d|%10s|%10s|%10s|\n", row->id, row->usecase ,row->username, dec_password);
 }
@@ -472,7 +477,7 @@ void print_help(){
            ".exit -> Quits the program and flushes the database\n"
            ".passgen -> Generates password if you want one\n"
            "\n"
-           "Data handling:"
+           "Data handling:\n"
            "insert <ID> <USECASE> <USERNAME> <PASSWORD> -> Stores data into the system\n"
            "select -> Shows you your stored data into system\n");
 }
@@ -546,8 +551,7 @@ void db_close(Table* table) {
     free(table);
 }
 
-void randomPasswordGeneration(int N)
-{
+void randomPasswordGeneration(int N) {
     // Initialize counter
     int i = 0;
 
@@ -617,21 +621,21 @@ MetaCommandResult do_meta_command(InputBuffer* input_buffer, Table* table, User*
         printf("Constants:\n");
         print_constants();
         return META_COMMAND_SUCCESS;
-    } else if(strcmp(input_buffer->buffer, ".nuser") == 0) {
+    } else if (strcmp(input_buffer->buffer, ".nuser") == 0) {
         input_user(user);
         save(user);
         return META_COMMAND_SUCCESS;
-    } else if(strcmp(input_buffer->buffer, ".suser") == 0){
+    } else if (strcmp(input_buffer->buffer, ".suser") == 0){
         print_user_list(user);
         return META_COMMAND_SUCCESS;
-    } else if(strcmp(input_buffer->buffer,".passgen")==0){
+    } else if (strcmp(input_buffer->buffer,".passgen")==0){
         int length;
         printf("Input length of password> ");
         scanf("%d", &length);
         randomPasswordGeneration(length);
         fflush_stdin();
         return META_COMMAND_SUCCESS;
-    } else if(strcmp(input_buffer->buffer,".help") == 0){
+    } else if (strcmp(input_buffer->buffer,".help") == 0){
         print_help();
         return META_COMMAND_SUCCESS;
     } else {
@@ -682,6 +686,10 @@ PrepareResult prepare_statement(InputBuffer* input_buffer,
     }
     if (strcmp(input_buffer->buffer, "select") == 0) {
         statement->type = STATEMENT_SELECT;
+        return PREPARE_SUCCESS;
+    }
+    if(strcmp(input_buffer->buffer, "save") == 0){
+        statement->type = STATEMENT_SAVE_DATA;
         return PREPARE_SUCCESS;
     }
 
@@ -876,6 +884,7 @@ ExecuteResult execute_insert(Statement* statement, Table* table) {
 ExecuteResult execute_raw_select(Statement* statement, Table* table){
     Cursor* cursor = table_start(table);
 
+    ROW_TABLE_HEADER;
     Row row;
     while(!(cursor->end_of_table)){
         deserialize_row(cursor_value(cursor), &row);
@@ -890,14 +899,59 @@ ExecuteResult execute_raw_select(Statement* statement, Table* table){
 ExecuteResult execute_select(Statement* statement, Table* table) {
     Cursor* cursor = table_start(table);
 
+    ROW_TABLE_HEADER;
     Row row;
     while (!(cursor->end_of_table)) {
         deserialize_row(cursor_value(cursor), &row);
         print_row(&row);
         cursor_advance(cursor);
     }
-
     free(cursor);
+
+    return EXECUTE_SUCCESS;
+}
+
+ExecuteResult execute_save_data(Statement* statement, Table* table){
+    Pager* pager = table->pager;
+
+    for (uint32_t i = 0; i < pager->num_pages; i++) {
+        if (pager->pages[i] == NULL) {
+            continue;
+        }
+        pager_flush(pager, i);
+        free(pager->pages[i]);
+        pager->pages[i] = NULL;        
+    }
+
+    int result = close(pager->file_descriptor);
+    if (result == -1) {
+        printf("Error closing db file.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (uint32_t i = 0; i < TABLE_MAX_PAGES; i++) {
+        void* page = pager->pages[i];
+        if (page) {
+            free(page);
+            pager->pages[i] = NULL;
+        }
+    }
+    free(pager);
+    free(table);
+
+    pager = pager_open(FILENAME);
+
+    table = malloc(sizeof(Table));
+    table->pager = pager;
+    table->root_page_num = 0;
+
+    if (pager->num_pages == 0) {
+        // New database file. Initialize page 0 as leaf node.
+        void* root_node = get_page(pager, 0);
+        initialize_leaf_node(root_node);
+        set_node_root(root_node, true);
+    }
+
+    printf("Table data saved! \n");
 
     return EXECUTE_SUCCESS;
 }
@@ -910,5 +964,7 @@ ExecuteResult execute_statement(Statement* statement, Table* table) {
             return execute_select(statement, table);
         case (STATEMENT_SELECT_RAW):
             return execute_raw_select(statement, table);
+        case (STATEMENT_SAVE_DATA):
+            return execute_save_data(statement, table);
     }
 }

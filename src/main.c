@@ -1,9 +1,10 @@
-#include <stdio.h>
-#include <stdbool.h>
-
 /**
- * Program includes
- * */
+ * Main program
+ * 
+ * Inputs data for either creating the user or for authenticating one
+ * If the user is authenticated user is stored into session and the main database
+ * is starting.
+ */
 
 #include "main.h"
 #include "session.h"
@@ -77,7 +78,7 @@ void print_welcome() {
             "Version 1.0 Filip Ivanusec \n"
             "\n"
             "\n"
-            "Use .help for simple tutorial on how to use PassMann"
+            "Use .help for simple tutorial on how to use PassMann \n"
     );
 }
 

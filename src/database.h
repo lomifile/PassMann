@@ -13,11 +13,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
+#include <stdlib.h>
 
 #include "user.h"
 
 #define TABLE_MAX_PAGES 100
 #define size_of_attribute(Struct, Attribute) sizeof(((Struct*)0)->Attribute)
+#define ROW_TABLE_HEADER printf("%10s|%10s|%10s|%10s|\n","ID","Usecase","Username","Password")
 
 typedef struct {
     char* buffer;
@@ -43,7 +46,12 @@ typedef enum {
     PREPARE_UNRECOGNIZED_STATEMENT
 } PrepareResult;
 
-typedef enum { STATEMENT_INSERT, STATEMENT_SELECT, STATEMENT_SELECT_RAW } StatementType;
+typedef enum { 
+    STATEMENT_INSERT, 
+    STATEMENT_SELECT, 
+    STATEMENT_SELECT_RAW,
+    STATEMENT_SAVE_DATA, 
+} StatementType;
 
 #define COLUMN_USECASE_SIZE  255
 #define COLUMN_USERNAME_SIZE 255
