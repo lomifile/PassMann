@@ -486,10 +486,12 @@ void print_help() {
            ".constants -> Shows you the constants\n"
            ".exit -> Quits the program and flushes the database\n"
            ".passgen -> Generates password if you want one\n"
+           ".log -> Shows you the log of usage"
            "\n"
            "Data handling:\n"
            "insert <ID> <USECASE> <USERNAME> <PASSWORD> -> Stores data into the system\n"
-           "select -> Shows you your stored data into system\n");
+           "select -> Shows you your stored data into system\n"
+           "raw -> Show you data with encryption\n");
 }
 
 void read_input(InputBuffer *input_buffer) {
@@ -615,7 +617,7 @@ void randomPasswordGeneration(int N) {
     printf("\n");
 }
 
-MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table, User *user) {
+MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table) {
     if (strcmp(input_buffer->buffer, ".exit") == 0) {
         close_input_buffer(input_buffer);
         db_close(table);
@@ -627,13 +629,6 @@ MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table, User 
     } else if (strcmp(input_buffer->buffer, ".constants") == 0) {
         printf("Constants:\n");
         print_constants();
-        return META_COMMAND_SUCCESS;
-    } else if (strcmp(input_buffer->buffer, ".nuser") == 0) {
-        input_user(user);
-        save(user);
-        return META_COMMAND_SUCCESS;
-    } else if (strcmp(input_buffer->buffer, ".suser") == 0) {
-        print_user_list(user);
         return META_COMMAND_SUCCESS;
     } else if (strcmp(input_buffer->buffer, ".passgen") == 0) {
         int length;

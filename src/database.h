@@ -6,7 +6,6 @@
 #define PASSMANN_DATABASE_H
 
 #include <stdint.h>
-#include "user.h"
 
 #define TABLE_MAX_PAGES 100
 #define size_of_attribute(Struct, Attribute) sizeof(((Struct*)0)->Attribute)
@@ -104,7 +103,7 @@ PrepareResult prepare_statement(InputBuffer *input_buffer, Statement *statement)
 
 PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *statement);
 
-MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table, User *user);
+MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table);
 
 void db_close(Table *table);
 
