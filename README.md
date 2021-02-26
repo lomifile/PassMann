@@ -13,3 +13,12 @@ If you want to install and have fun with this program just run:
 ./install.sh
 ```
 It will simply build te project and install it onto your system.
+
+# Build
+
+If you want just to build this program and have fun with it just run
+```shell
+./build.sh
+```
+
+It will generate debug-build folder where all the executable will be
