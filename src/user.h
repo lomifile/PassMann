@@ -8,7 +8,7 @@
 #define NAME_MAX_CHAR 150
 #define USERNAME_MAX_CHAR 255
 #define PASSWORD_MAX_CHAR 255
-#define MAX_USER 1
+#define MAX_USER 2
 
 typedef struct{
     char name[NAME_MAX_CHAR];
