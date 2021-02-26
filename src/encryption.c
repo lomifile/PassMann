@@ -1,9 +1,11 @@
-//
-// Created by filip on 19. 02. 2021..
-//
+/**
+ * Encryption
+ * 
+ * Contains 2 function for encrypting and decrypting data
+ * 
+ **/
 
 #include "encryption.h"
-#include <openssl/aes.h>
 
 AES_KEY enc_key, dec_key;
 

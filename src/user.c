@@ -1,11 +1,11 @@
-//
-// Created by filip on 17. 02. 2021..
-//
+/**
+ * User 
+ * 
+ * This piece contains al the manipulations and data handling tools for 
+ * creating user.
+ * 
+ */
 
-#include <stdio.h>
-#include <pwd.h>
-#include <string.h>
-#include <unistd.h>
 #include "user.h"
 #include "hashing.h"
 #include "session.h"

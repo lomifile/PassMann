@@ -1,13 +1,15 @@
-#include <stdio.h>
-#include <stdbool.h>
-
 /**
- * Program includes
- * */
+ * Main program
+ * 
+ * Inputs data for either creating the user or for authenticating one
+ * If the user is authenticated user is stored into session and the main database
+ * is starting.
+ */
 
 #include "main.h"
 #include "session.h"
 #include "database.h"
+#include "log.h"
 
 void fflush_stdin()
 { int c; while ((c = getchar()) != '\n' && c != EOF); }
@@ -77,7 +79,7 @@ void print_welcome() {
             "Version 1.0 Filip Ivanusec \n"
             "\n"
             "\n"
-            "Use .help for simple tutorial on how to use PassMann"
+            "Use .help for simple tutorial on how to use PassMann \n"
     );
 }
 
@@ -97,6 +99,11 @@ int print_input(User *user) {
         input_user(user);
         save(user);
     }
+    bool log = check_log();
+    if(!log){
+        printf("Created log for PassMann! \n");
+        create_log_file();
+    }
 }
 
 int main() {
@@ -105,7 +112,8 @@ int main() {
 
     print_welcome();
     print_input(&user);
-
+    time_t now = time(NULL);
+    append_log(ctime(&now), "PassMann started");
     bool auth = isAuth(&user);
 
     if(auth) {
