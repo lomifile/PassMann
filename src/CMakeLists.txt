@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.16)
+
+set(CMAKE_C_STANDARD 99)
+project(src VERSION 1)
+message("-- CMAKE_PROJECT_VERSION = ${CMAKE_PROJECT_VERSION}")
+add_executable(PassMann main.c database.c encryption.c log.c)
+
+target_link_libraries(PassMann PUBLIC m)
+target_link_libraries(PassMann PUBLIC ssl)
+target_link_libraries(PassMann PUBLIC crypto)
