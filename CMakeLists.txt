@@ -6,7 +6,7 @@ set(PROJECT_VERSION_MINOR 0 CACHE STRING "minor version" FORCE)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/debug)
-add_executable(PassMann src/main.c src/user.c src/session.c src/database.c src/hashing.c src/encryption.c)
+add_executable(PassMann src/main.c src/user.c src/session.c src/database.c src/hashing.c src/encryption.c src/log.c)
 target_link_libraries(PassMann PUBLIC m)
 target_link_libraries(PassMann PUBLIC ssl)
 target_link_libraries(PassMann PUBLIC crypto)

@@ -27,7 +27,7 @@ void strip_newline(char *s)
 char* input_username(){
     fflush(stdin);
     printf("Input username> ");
-    fgets(username, USERNAME_MAX_CHAR, stdin);
+    fgets(username, USERNAME_MAX_CHAR + 1, stdin);
     strip_newline(username);
     return username;
 }

@@ -9,6 +9,7 @@
 #include "main.h"
 #include "session.h"
 #include "database.h"
+#include "log.h"
 
 void fflush_stdin()
 { int c; while ((c = getchar()) != '\n' && c != EOF); }
@@ -98,6 +99,11 @@ int print_input(User *user) {
         input_user(user);
         save(user);
     }
+    bool log = check_log();
+    if(!log){
+        printf("Created log for PassMann! \n");
+        create_log_file();
+    }
 }
 
 int main() {
@@ -106,7 +112,8 @@ int main() {
 
     print_welcome();
     print_input(&user);
-
+    time_t now = time(NULL);
+    append_log(ctime(&now), "PassMann started");
     bool auth = isAuth(&user);
 
     if(auth) {
