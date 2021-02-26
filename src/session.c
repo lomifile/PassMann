@@ -16,12 +16,6 @@
 char username[USERNAME_MAX_CHAR];
 char password[PASSWORD_MAX_CHAR];
 
-Session init_session() {
-    Session init;
-    init.last = -1;
-    return init;
-}
-
 void strip_newline(char *s) {
     while (*s != '\0') {
         if (*s == '\r' || *s == '\n') {
@@ -77,7 +71,8 @@ void insert_session(User *user, int pos, Session *session, char *username, char 
 }
 
 int authentication(User *user, char *username, char *password) {
-    Session session = init_session();
+    Session session;
+    session.last = -1;
     int num = 0;
     do {
         int result = search(user, username, password);
