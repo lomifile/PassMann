@@ -24,6 +24,7 @@
 #include "main.h"
 #include "database.h"
 #include "encryption.h"
+#include "log.h"
 
 const uint32_t ID_SIZE = size_of_attribute(Row, id);
 const uint32_t USERNAME_SIZE = size_of_attribute(Row, username);
@@ -489,7 +490,8 @@ void print_help() {
            "Data handling:\n"
            "insert <ID> <USECASE> <USERNAME> <PASSWORD> -> Stores data into the system\n"
            "select -> Shows you your stored data into system\n"
-           "raw -> Show you data with encryption\n");
+           "raw -> Show you data with encryption\n"
+           "save -> Flushes and reloads database\n");
 }
 
 void read_input(InputBuffer *input_buffer) {
@@ -619,14 +621,17 @@ MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table) {
     if (strcmp(input_buffer->buffer, ".exit") == 0) {
         close_input_buffer(input_buffer);
         db_close(table);
+        append_log(time_now(), "PassMan exit");
         exit(EXIT_SUCCESS);
     } else if (strcmp(input_buffer->buffer, ".btree") == 0) {
         printf("Tree:\n");
         print_tree(table->pager, 0, 0);
+        append_log(time_now(), "Show tree");
         return META_COMMAND_SUCCESS;
     } else if (strcmp(input_buffer->buffer, ".constants") == 0) {
         printf("Constants:\n");
         print_constants();
+        append_log(time_now(), "Print constants");
         return META_COMMAND_SUCCESS;
     } else if (strcmp(input_buffer->buffer, ".passgen") == 0) {
         int length;
@@ -634,9 +639,15 @@ MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table) {
         scanf("%d", &length);
         randomPasswordGeneration(length);
         fflush_stdin();
+        append_log(time_now(), "Generated password");
+        return META_COMMAND_SUCCESS;
+    } else if(strcmp(input_buffer->buffer, ".log") == 0){
+        display_log();
+        append_log(time_now(), "Displayed log");
         return META_COMMAND_SUCCESS;
     } else if (strcmp(input_buffer->buffer, ".help") == 0) {
         print_help();
+        append_log(time_now(), "Requested help");
         return META_COMMAND_SUCCESS;
     } else {
         return META_COMMAND_UNRECOGNIZED_COMMAND;
@@ -678,18 +689,22 @@ PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *statement) {
 PrepareResult prepare_statement(InputBuffer *input_buffer,
                                 Statement *statement) {
     if (strncmp(input_buffer->buffer, "insert", 6) == 0) {
+        append_log(time_now(), "Insert new data");
         return prepare_insert(input_buffer, statement);
     }
     if (strcmp(input_buffer->buffer, "raw") == 0) {
         statement->type = STATEMENT_SELECT_RAW;
+        append_log(time_now(), "Raw select");
         return PREPARE_SUCCESS;
     }
     if (strcmp(input_buffer->buffer, "select") == 0) {
         statement->type = STATEMENT_SELECT;
+        append_log(time_now(), "Selected data");
         return PREPARE_SUCCESS;
     }
     if (strcmp(input_buffer->buffer, "save") == 0) {
         statement->type = STATEMENT_SAVE_DATA;
+        append_log(time_now(), "Saved data");
         return PREPARE_SUCCESS;
     }
 

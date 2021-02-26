@@ -11,7 +11,7 @@ void create_log_file(){
         exit(EXIT_FAILURE);
 
     time_t t = time(NULL);
-    fprintf(fp, "%s-%s", INIT_MSG, ctime(&t));
+    fprintf(fp, "%s --------> %s", INIT_MSG, ctime(&t));
     fclose(fp);
 }
 
@@ -38,7 +38,7 @@ void append_log(char*date ,char* input){
     if(fp == NULL)
         exit(EXIT_FAILURE);
 
-    fprintf(fp, "%s-------->%s\n", date, input);
+    fprintf(fp, "%s --------> %s\n", date, input);
     fclose(fp);
 }
 
@@ -47,4 +47,9 @@ bool check_log(){
         return true;
     else
         return false;
+}
+
+char* time_now(){
+    time_t now = time(NULL);
+    return ctime(&now);
 }

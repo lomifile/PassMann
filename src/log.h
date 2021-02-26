@@ -24,5 +24,7 @@ void create_log_file();
 void display_log();
 void append_log(char*date ,char* input);
 bool check_log();
+char* time_now();
+
 
 #endif //PASSMANN_LOG_H
