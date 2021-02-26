@@ -6,6 +6,7 @@
 #define PASSMANN_MAIN_H
 
 #define FILENAME "database.db"
+
 void fflush_stdin();
 
 #endif //PASSMANN_MAIN_H

@@ -16,7 +16,7 @@
 char username[USERNAME_MAX_CHAR];
 char password[PASSWORD_MAX_CHAR];
 
-Session init_session(){
+Session init_session() {
     Session init;
     init.last = -1;
     return init;
