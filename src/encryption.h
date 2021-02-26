@@ -5,8 +5,6 @@
 #ifndef PASSMANN_ENCRYPTION_H
 #define PASSMANN_ENCRYPTION_H
 
-#include <openssl/aes.h>
-
 #define AES_ENC_MAX_SIZE 255
 
 static const unsigned char key[] = {

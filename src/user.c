@@ -6,6 +6,11 @@
  * 
  */
 
+#include <string.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <pwd.h>
+
 #include "user.h"
 #include "hashing.h"
 #include "session.h"

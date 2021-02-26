@@ -5,17 +5,7 @@
 #ifndef PASSMANN_DATABASE_H
 #define PASSMANN_DATABASE_H
 
-#include <errno.h>
-#include <fcntl.h>
-#include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <stdlib.h>
-
 #include "user.h"
 
 #define TABLE_MAX_PAGES 100

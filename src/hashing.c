@@ -5,8 +5,12 @@
  * 
  * */
 
-#include "hashing.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <openssl/sha.h>
 
+#include "hashing.h"
 
 char* getHash(char* string){
     unsigned char* hashed = malloc(SHA256_DIGEST_LENGTH);

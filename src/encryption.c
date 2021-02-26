@@ -5,6 +5,7 @@
  * 
  **/
 
+#include <openssl/aes.h>
 #include "encryption.h"
 
 AES_KEY enc_key, dec_key;
