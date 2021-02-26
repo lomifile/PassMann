@@ -5,16 +5,20 @@
  * If the user is authenticated user is stored into session and the main database
  * is starting.
  */
+#include <stdio.h>
+#include <stdbool.h>
 
 #include "main.h"
 #include "session.h"
 #include "database.h"
 #include "log.h"
 
-void fflush_stdin()
-{ int c; while ((c = getchar()) != '\n' && c != EOF); }
+void fflush_stdin() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
 
-void start_db(Table *table, User* user){
+void start_db(Table *table, User *user) {
     InputBuffer *input_buffer = new_input_buffer();
     while (true) {
         print_prompt();
@@ -60,13 +64,13 @@ void start_db(Table *table, User* user){
     }
 }
 
-bool isAuth(User* user){
-    char *username =(char*) malloc(sizeof(USERNAME_MAX_CHAR));
+bool isAuth(User *user) {
+    char *username = (char *) malloc(sizeof(USERNAME_MAX_CHAR));
     username = input_username();
-    char *password = (char*)malloc(sizeof(PASSWORD_MAX_CHAR));
+    char *password = (char *) malloc(sizeof(PASSWORD_MAX_CHAR));
     password = input_password();
     int result = authentication(user, username, password);
-    if(result == 1){
+    if (result == 1) {
         return true;
     }
     return false;
@@ -76,7 +80,7 @@ void print_welcome() {
     printf(
             "<<PassMan>> \n"
             "Welcome to PassMan \n"
-            "Version 1.0 Filip Ivanusec \n"
+            "Version 1.0 by Filip Ivanusec \n"
             "\n"
             "\n"
             "Use .help for simple tutorial on how to use PassMann \n"
@@ -116,7 +120,7 @@ int main() {
     append_log(ctime(&now), "PassMann started");
     bool auth = isAuth(&user);
 
-    if(auth) {
+    if (auth) {
         Table *table = db_open(FILENAME);
         fflush(stdin);
         start_db(table, &user);

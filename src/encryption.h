@@ -5,8 +5,6 @@
 #ifndef PASSMANN_ENCRYPTION_H
 #define PASSMANN_ENCRYPTION_H
 
-#include <openssl/aes.h>
-
 #define AES_ENC_MAX_SIZE 255
 
 static const unsigned char key[] = {
@@ -19,7 +17,8 @@ static const unsigned char key[] = {
 unsigned char enc_out[AES_ENC_MAX_SIZE];
 unsigned char dec_out[AES_ENC_MAX_SIZE];
 
-char* encrypt_data(char* password);
-char* decrypt_data(char* password);
+char *encrypt_data(char *password);
+
+char *decrypt_data(char *password);
 
 #endif //PASSMANN_ENCRYPTION_H

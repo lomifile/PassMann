@@ -6,24 +6,30 @@
  * 
  */
 
+#include <string.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <pwd.h>
+
 #include "user.h"
 #include "hashing.h"
 #include "session.h"
 
-void strip_nul(char* buf){
+void strip_nul(char *buf) {
     int len;
     buf[sizeof(buf) - 1] = '\0';
 /* compute the length, and truncate the \n if any */
     len = strlen(buf);
-    while ( len > 0 && buf[len - 1] == '\n' )
-    {
+    while (len > 0 && buf[len - 1] == '\n') {
         buf[len - 1] = '\0';
         --len;
     }
 }
 
-void flush_stdin()
-{ int c; while ((c = getchar()) != '\n' && c != EOF); }
+void flush_stdin() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
 
 char *getUserName() {
     uid_t uid = geteuid();
@@ -36,7 +42,7 @@ char *getUserName() {
 }
 
 void print_user_list(User *user) {
-    printf("%10s|%10s|%10s|\n","Name","Username","Password");
+    printf("%10s|%10s|%10s|\n", "Name", "Username", "Password");
     printf("=================================\n");
     for (int index = 0; index <= user->row; index++) {
         printf("%10s|%10s|%10s|\n", user->user[index].name, user->user[index].username, user->user[index].password);
@@ -75,7 +81,7 @@ void input_user(User *user) {
     scanf("%s", password);
     strip_newline(password);
     system("stty echo");
-    char* hashed = getHash(password);
+    char *hashed = getHash(password);
     strcpy(data.password, hashed);
 
     insert(data, user->row + 1, user);
