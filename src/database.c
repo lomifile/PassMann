@@ -19,7 +19,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-#include <stdlib.h>
 
 #include "main.h"
 #include "database.h"
@@ -34,7 +33,7 @@ const uint32_t ID_OFFSET = 0;
 const uint32_t USERNAME_OFFSET = ID_OFFSET + ID_SIZE;
 const uint32_t PASSWORD_OFFSET = USERNAME_OFFSET + USERNAME_SIZE;
 const uint32_t USECASE_OFFSET = PASSWORD_OFFSET + PASSWORD_SIZE;
-const uint32_t ROW_SIZE = ID_SIZE + USERNAME_SIZE + PASSWORD_SIZE;
+const uint32_t ROW_SIZE = ID_SIZE + USECASE_SIZE +  USERNAME_SIZE + PASSWORD_SIZE;
 
 const uint32_t PAGE_SIZE = 4096;
 
@@ -506,6 +505,7 @@ void read_input(InputBuffer *input_buffer) {
     // Ignore trailing newline
     input_buffer->input_length = bytes_read - 1;
     input_buffer->buffer[bytes_read - 1] = 0;
+    fflush(stdin);
 }
 
 void close_input_buffer(InputBuffer *input_buffer) {
@@ -638,7 +638,6 @@ MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table) {
         printf("Input length of password> ");
         scanf("%d", &length);
         randomPasswordGeneration(length);
-        fflush_stdin();
         append_log(time_now(), "Generated password");
         return META_COMMAND_SUCCESS;
     } else if(strcmp(input_buffer->buffer, ".log") == 0){

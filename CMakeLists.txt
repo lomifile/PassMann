@@ -2,14 +2,14 @@ cmake_minimum_required(VERSION 3.16)
 project(PassMann C)
 project(PassMann VERSION 1.0.0)
 
+add_subdirectory(src)
 set(PROJECT_VERSION_MAJOR 1 CACHE STRING "major version" FORCE)
 set(PROJECT_VERSION_MINOR 0 CACHE STRING "minor version" FORCE)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-set(CMAKE_BUILD_TYPE Prod)
+set(CMAKE_BUILD_TYPE Debug)
 
-add_subdirectory(src)
 install(TARGETS PassMann
         DESTINATION /usr/bin)
 
@@ -26,3 +26,5 @@ set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_PACKAGE_CONTACT "Filip Ivanusec")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "")
 include(CPack)
+
+

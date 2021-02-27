@@ -13,11 +13,6 @@
 #include "database.h"
 #include "log.h"
 
-void fflush_stdin() {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
-}
-
 void start_db(Table *table) {
     InputBuffer *input_buffer = new_input_buffer();
     while (true) {

@@ -1,6 +1,9 @@
-//
-// Created by filip on 25. 02. 2021..
-//
+/**
+ * Log
+ *
+ * Creates and edits data into passmannlog.txt
+ * 
+ :*/
 
 #include "log.h"
 

@@ -4,15 +4,17 @@
  * Contains 2 function for encrypting and decrypting data
  * 
  **/
-
+#include <string.h>
 #include <openssl/aes.h>
 #include "encryption.h"
 
 AES_KEY enc_key, dec_key;
 
 char *encrypt_data(char *password) {
-    AES_set_encrypt_key(key, 128, &enc_key);
-    AES_encrypt(password, enc_out, &enc_key);
+    do {
+        AES_set_encrypt_key(key, 128, &enc_key);
+        AES_encrypt(password, enc_out, &enc_key);
+    }while(strcmp(password, decrypt_data(enc_out)) != 0);
     return enc_out;
 }
 
