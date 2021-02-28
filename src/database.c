@@ -18,12 +18,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <time.h>
+#include <sodium/randombytes.h>
 
-#include "main.h"
 #include "database.h"
 #include "encryption.h"
 #include "log.h"
+#include "input.h"
 
 const uint32_t ID_SIZE = size_of_attribute(Row, id);
 const uint32_t USERNAME_SIZE = size_of_attribute(Row, username);
@@ -86,8 +86,8 @@ const uint32_t LEAF_NODE_HEADER_SIZE = COMMON_NODE_HEADER_SIZE +
 const uint32_t LEAF_NODE_KEY_SIZE = sizeof(uint32_t);
 const uint32_t LEAF_NODE_KEY_OFFSET = 0;
 const uint32_t LEAF_NODE_VALUE_SIZE = ROW_SIZE;
-const uint32_t LEAF_NODE_VALUE_OFFSET =
-        LEAF_NODE_KEY_OFFSET + LEAF_NODE_KEY_SIZE;
+//const uint32_t LEAF_NODE_VALUE_OFFSET =
+//        LEAF_NODE_KEY_OFFSET + LEAF_NODE_KEY_SIZE;
 const uint32_t LEAF_NODE_CELL_SIZE = LEAF_NODE_KEY_SIZE + LEAF_NODE_VALUE_SIZE;
 const uint32_t LEAF_NODE_SPACE_FOR_CELLS = PAGE_SIZE - LEAF_NODE_HEADER_SIZE;
 const uint32_t LEAF_NODE_MAX_CELLS =
@@ -96,15 +96,15 @@ const uint32_t LEAF_NODE_RIGHT_SPLIT_COUNT = (LEAF_NODE_MAX_CELLS + 1) / 2;
 const uint32_t LEAF_NODE_LEFT_SPLIT_COUNT =
         (LEAF_NODE_MAX_CELLS + 1) - LEAF_NODE_RIGHT_SPLIT_COUNT;
 
-void print_row_encrypted(Row *row) {
+void print_row_encrypted(Row *selected_row) {
     printf("============================================\n");
-    printf("%10d|%10s|%10s|%10s|\n", row->id, row->usecase, row->username, row->password);
+    printf("%10d|%10s|%10s|%10s|\n", selected_row->id, selected_row->usecase, selected_row->username, selected_row->password);
 }
 
-void print_row(Row *row) {
-    char *dec_password = decrypt_data(row->password);
+void print_row(Row *selected_row) {
+    char *dec_password = decrypt_data(selected_row->password);
     printf("============================================\n");
-    printf("%10d|%10s|%10s|%10s|\n", row->id, row->usecase, row->username, dec_password);
+    printf("%10d|%10s|%10s|%10s|\n", selected_row->id, selected_row->usecase, selected_row->username, dec_password);
 }
 
 NodeType get_node_type(void *node) {
@@ -195,40 +195,40 @@ void print_constants() {
     printf("LEAF_NODE_MAX_CELLS: %d\n", LEAF_NODE_MAX_CELLS);
 }
 
-void *get_page(Pager *pager, uint32_t page_num) {
+void *get_page(Pager *ptr, uint32_t page_num) {
     if (page_num > TABLE_MAX_PAGES) {
         printf("Tried to fetch page number out of bounds. %d > %d\n", page_num,
                TABLE_MAX_PAGES);
         exit(EXIT_FAILURE);
     }
 
-    if (pager->pages[page_num] == NULL) {
+    if (ptr->pages[page_num] == NULL) {
         // Cache miss. Allocate memory and load from file.
         void *page = malloc(PAGE_SIZE);
-        uint32_t num_pages = pager->file_length / PAGE_SIZE;
+        uint32_t num_pages = ptr->file_length / PAGE_SIZE;
 
         // We might save a partial page at the end of the file
-        if (pager->file_length % PAGE_SIZE) {
+        if (ptr->file_length % PAGE_SIZE) {
             num_pages += 1;
         }
 
         if (page_num <= num_pages) {
-            lseek(pager->file_descriptor, page_num * PAGE_SIZE, SEEK_SET);
-            ssize_t bytes_read = read(pager->file_descriptor, page, PAGE_SIZE);
+            lseek(ptr->file_descriptor, page_num * PAGE_SIZE, SEEK_SET);
+            ssize_t bytes_read = read(ptr->file_descriptor, page, PAGE_SIZE);
             if (bytes_read == -1) {
                 printf("Error reading file: %d\n", errno);
                 exit(EXIT_FAILURE);
             }
         }
 
-        pager->pages[page_num] = page;
+        ptr->pages[page_num] = page;
 
-        if (page_num >= pager->num_pages) {
-            pager->num_pages = page_num + 1;
+        if (page_num >= ptr->num_pages) {
+            ptr->num_pages = page_num + 1;
         }
     }
 
-    return pager->pages[page_num];
+    return ptr->pages[page_num];
 }
 
 void indent(uint32_t level) {
@@ -237,8 +237,8 @@ void indent(uint32_t level) {
     }
 }
 
-void print_tree(Pager *pager, uint32_t page_num, uint32_t indentation_level) {
-    void *node = get_page(pager, page_num);
+void print_tree(Pager *ptr, uint32_t page_num, uint32_t indentation_level) {
+    void *node = get_page(ptr, page_num);
     uint32_t num_keys, child;
 
     switch (get_node_type(node)) {
@@ -257,13 +257,13 @@ void print_tree(Pager *pager, uint32_t page_num, uint32_t indentation_level) {
             printf("- internal (size %d)\n", num_keys);
             for (uint32_t i = 0; i < num_keys; i++) {
                 child = *internal_node_child(node, i);
-                print_tree(pager, child, indentation_level + 1);
+                print_tree(ptr, child, indentation_level + 1);
 
                 indent(indentation_level + 1);
                 printf("- key %d\n", *internal_node_key(node, i));
             }
             child = *internal_node_right_child(node);
-            print_tree(pager, child, indentation_level + 1);
+            print_tree(ptr, child, indentation_level + 1);
             break;
     }
 }
@@ -295,14 +295,14 @@ void initialize_internal_node(void *node) {
     *internal_node_num_keys(node) = 0;
 }
 
-Cursor *leaf_node_find(Table *table, uint32_t page_num, uint32_t key) {
-    void *node = get_page(table->pager, page_num);
+Cursor *leaf_node_find(Table *tbl, uint32_t page_num, uint32_t i) {
+    void *node = get_page(tbl->pager, page_num);
     uint32_t num_cells = *leaf_node_num_cells(node);
 
-    Cursor *cursor = malloc(sizeof(Cursor));
-    cursor->table = table;
-    cursor->page_num = page_num;
-    cursor->end_of_table = false;
+    Cursor *ptr = malloc(sizeof(Cursor));
+    ptr->table = tbl;
+    ptr->page_num = page_num;
+    ptr->end_of_table = false;
 
     // Binary search
     uint32_t min_index = 0;
@@ -310,37 +310,37 @@ Cursor *leaf_node_find(Table *table, uint32_t page_num, uint32_t key) {
     while (one_past_max_index != min_index) {
         uint32_t index = (min_index + one_past_max_index) / 2;
         uint32_t key_at_index = *leaf_node_key(node, index);
-        if (key == key_at_index) {
-            cursor->cell_num = index;
-            return cursor;
+        if (i == key_at_index) {
+            ptr->cell_num = index;
+            return ptr;
         }
-        if (key < key_at_index) {
+        if (i < key_at_index) {
             one_past_max_index = index;
         } else {
             min_index = index + 1;
         }
     }
 
-    cursor->cell_num = min_index;
-    return cursor;
+    ptr->cell_num = min_index;
+    return ptr;
 }
 
-uint32_t internal_node_find_child(void *node, uint32_t key) {
+uint32_t internal_node_find_child(void *node, uint32_t key_value) {
     /*
     Return the index of the child which should contain
-    the given key.
+    the given key_value.
     */
 
     uint32_t num_keys = *internal_node_num_keys(node);
 
     /* Binary search */
     uint32_t min_index = 0;
-    uint32_t max_index = num_keys; /* there is one more child than key */
+    uint32_t max_index = num_keys; /* there is one more child than key_value */
 
     while (min_index != max_index) {
         uint32_t index = (min_index + max_index) / 2;
         uint32_t key_to_right = *internal_node_key(node, index);
-        if (key_to_right >= key) {
+        if (key_to_right >= key_value) {
             max_index = index;
         } else {
             min_index = index + 1;
@@ -350,66 +350,66 @@ uint32_t internal_node_find_child(void *node, uint32_t key) {
     return min_index;
 }
 
-Cursor *internal_node_find(Table *table, uint32_t page_num, uint32_t key) {
-    void *node = get_page(table->pager, page_num);
+Cursor *internal_node_find(Table *tbl, uint32_t page_num, uint32_t keyValue) {
+    void *node = get_page(tbl->pager, page_num);
 
-    uint32_t child_index = internal_node_find_child(node, key);
+    uint32_t child_index = internal_node_find_child(node, keyValue);
     uint32_t child_num = *internal_node_child(node, child_index);
-    void *child = get_page(table->pager, child_num);
+    void *child = get_page(tbl->pager, child_num);
     switch (get_node_type(child)) {
         case NODE_LEAF:
-            return leaf_node_find(table, child_num, key);
+            return leaf_node_find(tbl, child_num, keyValue);
         case NODE_INTERNAL:
-            return internal_node_find(table, child_num, key);
+            return internal_node_find(tbl, child_num, keyValue);
     }
 }
 
 /*
-Return the position of the given key.
-If the key is not present, return the position
+Return the position of the given keyValue.
+If the keyValue is not present, return the position
 where it should be inserted
 */
-Cursor *table_find(Table *table, uint32_t key) {
-    uint32_t root_page_num = table->root_page_num;
-    void *root_node = get_page(table->pager, root_page_num);
+Cursor *table_find(Table *tbl, uint32_t keyValue) {
+    uint32_t root_page_num = tbl->root_page_num;
+    void *root_node = get_page(tbl->pager, root_page_num);
 
     if (get_node_type(root_node) == NODE_LEAF) {
-        return leaf_node_find(table, root_page_num, key);
+        return leaf_node_find(tbl, root_page_num, keyValue);
     } else {
-        return internal_node_find(table, root_page_num, key);
+        return internal_node_find(tbl, root_page_num, keyValue);
     }
 }
 
-Cursor *table_start(Table *table) {
-    Cursor *cursor = table_find(table, 0);
+Cursor *table_start(Table *tbl) {
+    Cursor *ptr = table_find(tbl, 0);
 
-    void *node = get_page(table->pager, cursor->page_num);
+    void *node = get_page(tbl->pager, ptr->page_num);
     uint32_t num_cells = *leaf_node_num_cells(node);
-    cursor->end_of_table = (num_cells == 0);
+    ptr->end_of_table = (num_cells == 0);
 
-    return cursor;
+    return ptr;
 }
 
-void *cursor_value(Cursor *cursor) {
-    uint32_t page_num = cursor->page_num;
-    void *page = get_page(cursor->table->pager, page_num);
-    return leaf_node_value(page, cursor->cell_num);
+void *cursor_value(Cursor *ptr) {
+    uint32_t page_num = ptr->page_num;
+    void *page = get_page(ptr->table->pager, page_num);
+    return leaf_node_value(page, ptr->cell_num);
 }
 
-void cursor_advance(Cursor *cursor) {
-    uint32_t page_num = cursor->page_num;
-    void *node = get_page(cursor->table->pager, page_num);
+void cursor_advance(Cursor *ptr) {
+    uint32_t page_num = ptr->page_num;
+    void *node = get_page(ptr->table->pager, page_num);
 
-    cursor->cell_num += 1;
-    if (cursor->cell_num >= (*leaf_node_num_cells(node))) {
+    ptr->cell_num += 1;
+    if (ptr->cell_num >= (*leaf_node_num_cells(node))) {
         /* Advance to next leaf node */
         uint32_t next_page_num = *leaf_node_next_leaf(node);
         if (next_page_num == 0) {
             /* This was rightmost leaf */
-            cursor->end_of_table = true;
+            ptr->end_of_table = true;
         } else {
-            cursor->page_num = next_page_num;
-            cursor->cell_num = 0;
+            ptr->page_num = next_page_num;
+            ptr->cell_num = 0;
         }
     }
 }
@@ -429,10 +429,10 @@ Pager *pager_open(const char *filename) {
 
     off_t file_length = lseek(fd, 0, SEEK_END);
 
-    Pager *pager = malloc(sizeof(Pager));
-    pager->file_descriptor = fd;
-    pager->file_length = file_length;
-    pager->num_pages = (file_length / PAGE_SIZE);
+    Pager *ptr = malloc(sizeof(Pager));
+    ptr->file_descriptor = fd;
+    ptr->file_length = file_length;
+    ptr->num_pages = (file_length / PAGE_SIZE);
 
     if (file_length % PAGE_SIZE != 0) {
         printf("Db file is not a whole number of pages. Corrupt file.\n");
@@ -440,29 +440,29 @@ Pager *pager_open(const char *filename) {
     }
 
     for (uint32_t i = 0; i < TABLE_MAX_PAGES; i++) {
-        pager->pages[i] = NULL;
+        ptr->pages[i] = NULL;
     }
 
-    return pager;
+    return ptr;
 }
 
 Table *db_open(const char *filename) {
-    Pager *pager = pager_open(filename);
+    Pager *ptr = pager_open(filename);
 
-    Table *table = malloc(sizeof(Table));
-    table->pager = pager;
-    table->root_page_num = 0;
+    Table *tbl = malloc(sizeof(Table));
+    tbl->pager = ptr;
+    tbl->root_page_num = 0;
 
-    if (pager->num_pages == 0) {
+    if (ptr->num_pages == 0) {
         // New database file. Initialize page 0 as leaf node.
-        void *root_node = get_page(pager, 0);
+        void *root_node = get_page(ptr, 0);
         initialize_leaf_node(root_node);
         set_node_root(root_node, true);
     }
 
     printf("Table loaded! \n");
 
-    return table;
+    return tbl;
 }
 
 InputBuffer *new_input_buffer() {
@@ -513,13 +513,13 @@ void close_input_buffer(InputBuffer *input_buffer) {
     free(input_buffer);
 }
 
-void pager_flush(Pager *pager, uint32_t page_num) {
-    if (pager->pages[page_num] == NULL) {
+void pager_flush(Pager *ptr, uint32_t page_num) {
+    if (ptr->pages[page_num] == NULL) {
         printf("Tried to flush null page\n");
         exit(EXIT_FAILURE);
     }
 
-    off_t offset = lseek(pager->file_descriptor, page_num * PAGE_SIZE, SEEK_SET);
+    off_t offset = lseek(ptr->file_descriptor, page_num * PAGE_SIZE, SEEK_SET);
 
     if (offset == -1) {
         printf("Error seeking: %d\n", errno);
@@ -527,7 +527,7 @@ void pager_flush(Pager *pager, uint32_t page_num) {
     }
 
     ssize_t bytes_written =
-            write(pager->file_descriptor, pager->pages[page_num], PAGE_SIZE);
+            write(ptr->file_descriptor, ptr->pages[page_num], PAGE_SIZE);
 
     if (bytes_written == -1) {
         printf("Error writing: %d\n", errno);
@@ -535,44 +535,39 @@ void pager_flush(Pager *pager, uint32_t page_num) {
     }
 }
 
-void db_close(Table *table) {
-    Pager *pager = table->pager;
+void db_close(Table *tbl) {
+    Pager *ptr = tbl->pager;
 
-    for (uint32_t i = 0; i < pager->num_pages; i++) {
-        if (pager->pages[i] == NULL) {
+    for (uint32_t i = 0; i < ptr->num_pages; i++) {
+        if (ptr->pages[i] == NULL) {
             continue;
         }
-        pager_flush(pager, i);
-        free(pager->pages[i]);
-        pager->pages[i] = NULL;
+        pager_flush(ptr, i);
+        free(ptr->pages[i]);
+        ptr->pages[i] = NULL;
     }
 
-    int result = close(pager->file_descriptor);
+    int result = close(ptr->file_descriptor);
     if (result == -1) {
         printf("Error closing db file.\n");
         exit(EXIT_FAILURE);
     }
     for (uint32_t i = 0; i < TABLE_MAX_PAGES; i++) {
-        void *page = pager->pages[i];
+        void *page = ptr->pages[i];
         if (page) {
             free(page);
-            pager->pages[i] = NULL;
+            ptr->pages[i] = NULL;
         }
     }
-    free(pager);
-    free(table);
+    free(ptr);
+    free(tbl);
 }
 
 void randomPasswordGeneration(int N) {
     // Initialize counter
-    int i = 0;
+    int i;
 
-    int randomizer = 0;
-
-    // Seed the random-number generator
-    // with current time so that the
-    // numbers will be different every time
-    srand((unsigned int) (time(NULL)));
+    uint32_t randomizer;
 
     // Array of numbers
     char numbers[] = "0123456789";
@@ -591,41 +586,60 @@ void randomPasswordGeneration(int N) {
 
     // To select the randomizer
     // inside the loop
-    randomizer = rand() % 4;
+    randomizer = randombytes_random() % 4;
 
     // Iterate over the range [0, N]
     for (i = 0; i < N; i++) {
 
         if (randomizer == 1) {
-            password[i] = numbers[rand() % 10];
-            randomizer = rand() % 4;
+            password[i] = numbers[randombytes_uniform(sizeof(numbers)) % 10];
+            randomizer = randombytes_random() % 4;
             printf("%c", password[i]);
         } else if (randomizer == 2) {
-            password[i] = symbols[rand() % 8];
-            randomizer = rand() % 4;
+            password[i] = symbols[randombytes_uniform(sizeof(symbols)) % 8];
+            randomizer = randombytes_random() % 4;
             printf("%c", password[i]);
         } else if (randomizer == 3) {
-            password[i] = LETTER[rand() % 26];
-            randomizer = rand() % 4;
+            password[i] = LETTER[randombytes_uniform(sizeof(LETTER)) % 26];
+            randomizer = randombytes_random() % 4;
             printf("%c", password[i]);
         } else {
-            password[i] = letter[rand() % 26];
-            randomizer = rand() % 4;
+            password[i] = letter[randombytes_uniform(sizeof(letter)) % 26];
+            randomizer = randombytes_random() % 4;
             printf("%c", password[i]);
         }
     }
     printf("\n");
 }
 
-MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table) {
+int get_last_id(Table *tbl){
+    Cursor *ptr = table_start(tbl);
+    int last_id = 0;
+    Row check_row;
+    while (!(ptr->end_of_table)) {
+        deserialize_row(cursor_value(ptr), &check_row);
+        cursor_advance(ptr);
+    }
+    if(ptr->end_of_table){
+        last_id = check_row.id;
+    }
+    free(ptr);
+    printf("Last id is: %d\n", last_id);
+    if(last_id == 1){
+        return 0;
+    }
+    return last_id;
+}
+
+MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *tbl) {
     if (strcmp(input_buffer->buffer, ".exit") == 0) {
         close_input_buffer(input_buffer);
-        db_close(table);
+        db_close(tbl);
         append_log(time_now(), "PassMan exit");
         exit(EXIT_SUCCESS);
     } else if (strcmp(input_buffer->buffer, ".btree") == 0) {
         printf("Tree:\n");
-        print_tree(table->pager, 0, 0);
+        print_tree(tbl->pager, 0, 0);
         append_log(time_now(), "Show tree");
         return META_COMMAND_SUCCESS;
     } else if (strcmp(input_buffer->buffer, ".constants") == 0) {
@@ -634,9 +648,15 @@ MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table) {
         append_log(time_now(), "Print constants");
         return META_COMMAND_SUCCESS;
     } else if (strcmp(input_buffer->buffer, ".passgen") == 0) {
-        int length;
-        printf("Input length of password> ");
-        scanf("%d", &length);
+        int length = 0, input_result;
+        do{
+            printf("Input length of password> ");
+            input_result = int_input(&length);
+            if (length == 0){
+                printf("Nothing was generated!\n");
+                return META_COMMAND_SUCCESS;
+            }
+        }while(input_result != 1);
         randomPasswordGeneration(length);
         append_log(time_now(), "Generated password");
         return META_COMMAND_SUCCESS;
@@ -648,25 +668,28 @@ MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *table) {
         print_help();
         append_log(time_now(), "Requested help");
         return META_COMMAND_SUCCESS;
+    } else if(strcmp(input_buffer->buffer, ".lastid") == 0){
+        get_last_id(tbl);
+        return META_COMMAND_SUCCESS;
     } else {
         return META_COMMAND_UNRECOGNIZED_COMMAND;
     }
 }
 
-PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *statement) {
-    statement->type = STATEMENT_INSERT;
-
+PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *stmt, Table *tbl) {
+    stmt->type = STATEMENT_INSERT;
+    int id;
     char *keyword = strtok(input_buffer->buffer, " ");
-    char *id_string = strtok(NULL, " ");
+//    char *id_string = strtok(NULL, " ");
     char *usecase = strtok(NULL, " ");
     char *username = strtok(NULL, " ");
     char *password = strtok(NULL, " ");
 
-    if (id_string == NULL || username == NULL || password == NULL || usecase == NULL) {
+    if (username == NULL || password == NULL || usecase == NULL) {
         return PREPARE_SYNTAX_ERROR;
     }
 
-    int id = atoi(id_string);
+    id = get_last_id(tbl) + 1;
     if (id < 0) {
         return PREPARE_NEGATIVE_ID;
     }
@@ -677,32 +700,32 @@ PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *statement) {
         return PREPARE_STRING_TOO_LONG;
     }
     char *enc_password = encrypt_data(password);
-    statement->row_to_insert.id = id;
-    strcpy(statement->row_to_insert.usecase, usecase);
-    strcpy(statement->row_to_insert.username, username);
-    strcpy(statement->row_to_insert.password, enc_password);
+    stmt->row_to_insert.id = id;
+    strcpy(stmt->row_to_insert.usecase, usecase);
+    strcpy(stmt->row_to_insert.username, username);
+    strcpy(stmt->row_to_insert.password, enc_password);
 
     return PREPARE_SUCCESS;
 }
 
 PrepareResult prepare_statement(InputBuffer *input_buffer,
-                                Statement *statement) {
+                                Statement *stmt, Table* tbl) {
     if (strncmp(input_buffer->buffer, "insert", 6) == 0) {
         append_log(time_now(), "Insert new data");
-        return prepare_insert(input_buffer, statement);
+        return prepare_insert(input_buffer, stmt, tbl);
     }
     if (strcmp(input_buffer->buffer, "raw") == 0) {
-        statement->type = STATEMENT_SELECT_RAW;
+        stmt->type = STATEMENT_SELECT_RAW;
         append_log(time_now(), "Raw select");
         return PREPARE_SUCCESS;
     }
     if (strcmp(input_buffer->buffer, "select") == 0) {
-        statement->type = STATEMENT_SELECT;
+        stmt->type = STATEMENT_SELECT;
         append_log(time_now(), "Selected data");
         return PREPARE_SUCCESS;
     }
     if (strcmp(input_buffer->buffer, "save") == 0) {
-        statement->type = STATEMENT_SAVE_DATA;
+        stmt->type = STATEMENT_SAVE_DATA;
         append_log(time_now(), "Saved data");
         return PREPARE_SUCCESS;
     }
@@ -714,9 +737,9 @@ PrepareResult prepare_statement(InputBuffer *input_buffer,
 Until we start recycling free pages, new pages will always
 go onto the end of the database file
 */
-uint32_t get_unused_page_num(Pager *pager) { return pager->num_pages; }
+uint32_t get_unused_page_num(Pager *ptr) { return ptr->num_pages; }
 
-void create_new_root(Table *table, uint32_t right_child_page_num) {
+void create_new_root(Table *tbl, uint32_t right_child_page_num) {
     /*
     Handle splitting the root.
     Old root copied to new page, becomes left child.
@@ -725,10 +748,10 @@ void create_new_root(Table *table, uint32_t right_child_page_num) {
     New root node points to two children.
     */
 
-    void *root = get_page(table->pager, table->root_page_num);
-    void *right_child = get_page(table->pager, right_child_page_num);
-    uint32_t left_child_page_num = get_unused_page_num(table->pager);
-    void *left_child = get_page(table->pager, left_child_page_num);
+    void *root = get_page(tbl->pager, tbl->root_page_num);
+    void *right_child = get_page(tbl->pager, right_child_page_num);
+    uint32_t left_child_page_num = get_unused_page_num(tbl->pager);
+    void *left_child = get_page(tbl->pager, left_child_page_num);
 
     /* Left child has data copied from old root */
     memcpy(left_child, root, PAGE_SIZE);
@@ -742,18 +765,18 @@ void create_new_root(Table *table, uint32_t right_child_page_num) {
     uint32_t left_child_max_key = get_node_max_key(left_child);
     *internal_node_key(root, 0) = left_child_max_key;
     *internal_node_right_child(root) = right_child_page_num;
-    *node_parent(left_child) = table->root_page_num;
-    *node_parent(right_child) = table->root_page_num;
+    *node_parent(left_child) = tbl->root_page_num;
+    *node_parent(right_child) = tbl->root_page_num;
 }
 
-void internal_node_insert(Table *table, uint32_t parent_page_num,
+void internal_node_insert(Table *tbl, uint32_t parent_page_num,
                           uint32_t child_page_num) {
     /*
     Add a new child/key pair to parent that corresponds to child
     */
 
-    void *parent = get_page(table->pager, parent_page_num);
-    void *child = get_page(table->pager, child_page_num);
+    void *parent = get_page(tbl->pager, parent_page_num);
+    void *child = get_page(tbl->pager, child_page_num);
     uint32_t child_max_key = get_node_max_key(child);
     uint32_t index = internal_node_find_child(parent, child_max_key);
 
@@ -766,7 +789,7 @@ void internal_node_insert(Table *table, uint32_t parent_page_num,
     }
 
     uint32_t right_child_page_num = *internal_node_right_child(parent);
-    void *right_child = get_page(table->pager, right_child_page_num);
+    void *right_child = get_page(tbl->pager, right_child_page_num);
 
     if (child_max_key > get_node_max_key(right_child)) {
         /* Replace right child */
@@ -791,26 +814,26 @@ void update_internal_node_key(void *node, uint32_t old_key, uint32_t new_key) {
     *internal_node_key(node, old_child_index) = new_key;
 }
 
-void leaf_node_split_and_insert(Cursor *cursor, uint32_t key, Row *value) {
+void leaf_node_split_and_insert(Cursor *ptr, uint32_t keyValue, Row *value) {
     /*
     Create a new node and move half the cells over.
     Insert the new value in one of the two nodes.
     Update parent or create a new parent.
     */
 
-    void *old_node = get_page(cursor->table->pager, cursor->page_num);
+    void *old_node = get_page(ptr->table->pager, ptr->page_num);
     uint32_t old_max = get_node_max_key(old_node);
-    uint32_t new_page_num = get_unused_page_num(cursor->table->pager);
-    void *new_node = get_page(cursor->table->pager, new_page_num);
+    uint32_t new_page_num = get_unused_page_num(ptr->table->pager);
+    void *new_node = get_page(ptr->table->pager, new_page_num);
     initialize_leaf_node(new_node);
     *node_parent(new_node) = *node_parent(old_node);
     *leaf_node_next_leaf(new_node) = *leaf_node_next_leaf(old_node);
     *leaf_node_next_leaf(old_node) = new_page_num;
 
     /*
-    All existing keys plus new key should should be divided
+    All existing keys plus new keyValue should should be divided
     evenly between old (left) and new (right) nodes.
-    Starting from the right, move each key to correct position.
+    Starting from the right, move each keyValue to correct position.
     */
     for (int32_t i = LEAF_NODE_MAX_CELLS; i >= 0; i--) {
         void *destination_node;
@@ -822,11 +845,11 @@ void leaf_node_split_and_insert(Cursor *cursor, uint32_t key, Row *value) {
         uint32_t index_within_node = i % LEAF_NODE_LEFT_SPLIT_COUNT;
         void *destination = leaf_node_cell(destination_node, index_within_node);
 
-        if (i == cursor->cell_num) {
+        if (i == ptr->cell_num) {
             serialize_row(value,
                           leaf_node_value(destination_node, index_within_node));
-            *leaf_node_key(destination_node, index_within_node) = key;
-        } else if (i > cursor->cell_num) {
+            *leaf_node_key(destination_node, index_within_node) = keyValue;
+        } else if (i > ptr->cell_num) {
             memcpy(destination, leaf_node_cell(old_node, i - 1), LEAF_NODE_CELL_SIZE);
         } else {
             memcpy(destination, leaf_node_cell(old_node, i), LEAF_NODE_CELL_SIZE);
@@ -838,129 +861,129 @@ void leaf_node_split_and_insert(Cursor *cursor, uint32_t key, Row *value) {
     *(leaf_node_num_cells(new_node)) = LEAF_NODE_RIGHT_SPLIT_COUNT;
 
     if (is_node_root(old_node)) {
-        return create_new_root(cursor->table, new_page_num);
+        return create_new_root(ptr->table, new_page_num);
     } else {
         uint32_t parent_page_num = *node_parent(old_node);
         uint32_t new_max = get_node_max_key(old_node);
-        void *parent = get_page(cursor->table->pager, parent_page_num);
+        void *parent = get_page(ptr->table->pager, parent_page_num);
 
         update_internal_node_key(parent, old_max, new_max);
-        internal_node_insert(cursor->table, parent_page_num, new_page_num);
+        internal_node_insert(ptr->table, parent_page_num, new_page_num);
         return;
     }
 }
 
-void leaf_node_insert(Cursor *cursor, uint32_t key, Row *value) {
-    void *node = get_page(cursor->table->pager, cursor->page_num);
+void leaf_node_insert(Cursor *ptr, uint32_t keyValue, Row *value) {
+    void *node = get_page(ptr->table->pager, ptr->page_num);
 
     uint32_t num_cells = *leaf_node_num_cells(node);
     if (num_cells >= LEAF_NODE_MAX_CELLS) {
         // Node full
-        leaf_node_split_and_insert(cursor, key, value);
+        leaf_node_split_and_insert(ptr, keyValue, value);
         return;
     }
 
-    if (cursor->cell_num < num_cells) {
+    if (ptr->cell_num < num_cells) {
         // Make room for new cell
-        for (uint32_t i = num_cells; i > cursor->cell_num; i--) {
+        for (uint32_t i = num_cells; i > ptr->cell_num; i--) {
             memcpy(leaf_node_cell(node, i), leaf_node_cell(node, i - 1),
                    LEAF_NODE_CELL_SIZE);
         }
     }
 
     *(leaf_node_num_cells(node)) += 1;
-    *(leaf_node_key(node, cursor->cell_num)) = key;
-    serialize_row(value, leaf_node_value(node, cursor->cell_num));
+    *(leaf_node_key(node, ptr->cell_num)) = keyValue;
+    serialize_row(value, leaf_node_value(node, ptr->cell_num));
 }
 
-ExecuteResult execute_insert(Statement *statement, Table *table) {
-    Row *row_to_insert = &(statement->row_to_insert);
+ExecuteResult execute_insert(Statement *stmt, Table *tbl) {
+    Row *row_to_insert = &(stmt->row_to_insert);
     uint32_t key_to_insert = row_to_insert->id;
-    Cursor *cursor = table_find(table, key_to_insert);
+    Cursor *ptr = table_find(tbl, key_to_insert);
 
-    void *node = get_page(table->pager, cursor->page_num);
+    void *node = get_page(tbl->pager, ptr->page_num);
     uint32_t num_cells = *leaf_node_num_cells(node);
 
-    if (cursor->cell_num < num_cells) {
-        uint32_t key_at_index = *leaf_node_key(node, cursor->cell_num);
+    if (ptr->cell_num < num_cells) {
+        uint32_t key_at_index = *leaf_node_key(node, ptr->cell_num);
         if (key_at_index == key_to_insert) {
             return EXECUTE_DUPLICATE_KEY;
         }
     }
 
-    leaf_node_insert(cursor, row_to_insert->id, row_to_insert);
+    leaf_node_insert(ptr, row_to_insert->id, row_to_insert);
 
-    free(cursor);
+    free(ptr);
 
     return EXECUTE_SUCCESS;
 }
 
-ExecuteResult execute_raw_select(Statement *statement, Table *table) {
-    Cursor *cursor = table_start(table);
+ExecuteResult execute_raw_select(Table *tbl) {
+    Cursor *ptr = table_start(tbl);
 
     ROW_TABLE_HEADER;
-    Row row;
-    while (!(cursor->end_of_table)) {
-        deserialize_row(cursor_value(cursor), &row);
-        print_row_encrypted(&row);
-        cursor_advance(cursor);
+    Row rowData;
+    while (!(ptr->end_of_table)) {
+        deserialize_row(cursor_value(ptr), &rowData);
+        print_row_encrypted(&rowData);
+        cursor_advance(ptr);
     }
 
-    free(cursor);
+    free(ptr);
     return EXECUTE_SUCCESS;
 }
 
-ExecuteResult execute_select(Statement *statement, Table *table) {
-    Cursor *cursor = table_start(table);
+ExecuteResult execute_select(Table *tbl) {
+    Cursor *ptr = table_start(tbl);
 
     ROW_TABLE_HEADER;
-    Row row;
-    while (!(cursor->end_of_table)) {
-        deserialize_row(cursor_value(cursor), &row);
-        print_row(&row);
-        cursor_advance(cursor);
+    Row rowData;
+    while (!(ptr->end_of_table)) {
+        deserialize_row(cursor_value(ptr), &rowData);
+        print_row(&rowData);
+        cursor_advance(ptr);
     }
-    free(cursor);
+    free(ptr);
 
     return EXECUTE_SUCCESS;
 }
 
-ExecuteResult execute_save_data(Statement *statement, Table *table) {
-    Pager *pager = table->pager;
+ExecuteResult execute_save_data(Table *tbl) {
+    Pager *ptr = tbl->pager;
 
-    for (uint32_t i = 0; i < pager->num_pages; i++) {
-        if (pager->pages[i] == NULL) {
+    for (uint32_t i = 0; i < ptr->num_pages; i++) {
+        if (ptr->pages[i] == NULL) {
             continue;
         }
-        pager_flush(pager, i);
-        free(pager->pages[i]);
-        pager->pages[i] = NULL;
+        pager_flush(ptr, i);
+        free(ptr->pages[i]);
+        ptr->pages[i] = NULL;
     }
 
-    int result = close(pager->file_descriptor);
+    int result = close(ptr->file_descriptor);
     if (result == -1) {
         printf("Error closing db file.\n");
         exit(EXIT_FAILURE);
     }
     for (uint32_t i = 0; i < TABLE_MAX_PAGES; i++) {
-        void *page = pager->pages[i];
+        void *page = ptr->pages[i];
         if (page) {
             free(page);
-            pager->pages[i] = NULL;
+            ptr->pages[i] = NULL;
         }
     }
-    free(pager);
-    free(table);
+    free(ptr);
+    free(tbl);
 
-    pager = pager_open(FILENAME);
+    ptr = pager_open(FILENAME);
 
-    table = malloc(sizeof(Table));
-    table->pager = pager;
-    table->root_page_num = 0;
+    tbl = malloc(sizeof(Table));
+    tbl->pager = ptr;
+    tbl->root_page_num = 0;
 
-    if (pager->num_pages == 0) {
+    if (ptr->num_pages == 0) {
         // New database file. Initialize page 0 as leaf node.
-        void *root_node = get_page(pager, 0);
+        void *root_node = get_page(ptr, 0);
         initialize_leaf_node(root_node);
         set_node_root(root_node, true);
     }
@@ -970,15 +993,15 @@ ExecuteResult execute_save_data(Statement *statement, Table *table) {
     return EXECUTE_SUCCESS;
 }
 
-ExecuteResult execute_statement(Statement *statement, Table *table) {
-    switch (statement->type) {
+ExecuteResult execute_statement(Statement *stmt, Table *tbl) {
+    switch (stmt->type) {
         case (STATEMENT_INSERT):
-            return execute_insert(statement, table);
+            return execute_insert(stmt, tbl);
         case (STATEMENT_SELECT):
-            return execute_select(statement, table);
+            return execute_select(tbl);
         case (STATEMENT_SELECT_RAW):
-            return execute_raw_select(statement, table);
+            return execute_raw_select(tbl);
         case (STATEMENT_SAVE_DATA):
-            return execute_save_data(statement, table);
+            return execute_save_data(tbl);
     }
 }

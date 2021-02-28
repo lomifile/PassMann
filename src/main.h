@@ -5,6 +5,5 @@
 #ifndef PASSMANN_MAIN_H
 #define PASSMANN_MAIN_H
 
-#define FILENAME "database.db"
 
 #endif //PASSMANN_MAIN_H

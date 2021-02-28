@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <errno.h>
 
-#define LOG_FILE "passmannlog.txt"
+#define LOG_FILE ".passmann/passmannlog.txt"
 #define INIT_MSG  "LOG FOR PASSMANN CREATED"
 FILE *fp;
 

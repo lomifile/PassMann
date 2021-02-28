@@ -8,19 +8,37 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <dirent.h>
 
-#include "main.h"
 #include "database.h"
 #include "log.h"
 
-void start_db(Table *table) {
+bool check_dir(){
+    struct stat st = {0};
+    DIR *dir = opendir(DIRNAME);
+    if(dir){
+        closedir(dir);
+        return true;
+    }
+    else if(ENOENT == errno){
+        if(stat(DIRNAME, &st) == -1)
+            mkdir(DIRNAME, 0700);
+        return true;
+    }
+    else{
+        printf("There was an error while trying to open dir");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void start_db(Table *tbl) {
     InputBuffer *input_buffer = new_input_buffer();
     while (true) {
         print_prompt();
         read_input(input_buffer);
 
         if (input_buffer->buffer[0] == '.') {
-            switch (do_meta_command(input_buffer, table)) {
+            switch (do_meta_command(input_buffer, tbl)) {
                 case (META_COMMAND_SUCCESS):
                     continue;
                 case (META_COMMAND_UNRECOGNIZED_COMMAND):
@@ -29,8 +47,8 @@ void start_db(Table *table) {
             }
         }
 
-        Statement statement;
-        switch (prepare_statement(input_buffer, &statement)) {
+        Statement stmt;
+        switch (prepare_statement(input_buffer, &stmt, tbl)) {
             case (PREPARE_SUCCESS):
                 break;
             case (PREPARE_NEGATIVE_ID):
@@ -48,7 +66,7 @@ void start_db(Table *table) {
                 continue;
         }
 
-        switch (execute_statement(&statement, table)) {
+        switch (execute_statement(&stmt, tbl)) {
             case (EXECUTE_SUCCESS):
                 printf("Executed.\n");
                 break;
@@ -74,8 +92,13 @@ int main() {
     print_welcome();
     time_t now = time(NULL);
     append_log(ctime(&now), "PassMann started");
-
-    Table *table = db_open(FILENAME);
+    bool dir_result = check_dir();
+    if (dir_result){
+        printf("All checks complete! \n");
+    } else {
+        printf("Creating directory for storing data \n");
+    }
+    Table *tbl = db_open(FILENAME);
     fflush(stdin);
-    start_db(table);
+    start_db(tbl);
 }
