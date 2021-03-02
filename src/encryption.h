@@ -14,9 +14,6 @@ static const unsigned char key[] = {
         0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
 };
 
-unsigned char enc_out[AES_ENC_MAX_SIZE];
-unsigned char dec_out[AES_ENC_MAX_SIZE];
-
 char *encrypt_data(char *password);
 
 char *decrypt_data(char *password);

@@ -8,6 +8,9 @@
 #include <openssl/aes.h>
 #include "encryption.h"
 
+unsigned char enc_out[AES_ENC_MAX_SIZE];
+unsigned char dec_out[AES_ENC_MAX_SIZE];
+
 AES_KEY enc_key, dec_key;
 
 char *encrypt_data(char *password) {

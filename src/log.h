@@ -18,7 +18,6 @@
 
 #define LOG_FILE ".passmann/passmannlog.txt"
 #define INIT_MSG  "LOG FOR PASSMANN CREATED"
-FILE *fp;
 
 void create_log_file();
 void display_log();

@@ -8,7 +8,7 @@
 #include "log.h"
 
 void create_log_file(){
-    fp = fopen(LOG_FILE , "w");
+    FILE* fp = fopen(LOG_FILE , "w");
     char t_now[30];
     if(fp == NULL)
         exit(EXIT_FAILURE);
@@ -19,7 +19,7 @@ void create_log_file(){
 }
 
 void display_log(){
-    fp = fopen(LOG_FILE, "r");
+    FILE* fp = fopen(LOG_FILE, "r");
     if(fp == NULL) {
         printf("There was a problem!");
         exit(EXIT_FAILURE);
@@ -37,7 +37,7 @@ void display_log(){
 
 void append_log(char*date ,char* input){
     strtok(date, "\n");
-    fp = fopen(LOG_FILE, "a");
+    FILE* fp = fopen(LOG_FILE, "a");
     if(fp == NULL)
         exit(EXIT_FAILURE);
 

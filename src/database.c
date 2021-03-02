@@ -699,11 +699,11 @@ PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *stmt, Table *
     if (strlen(password) > COLUMN_PASSWORD_SIZE) {
         return PREPARE_STRING_TOO_LONG;
     }
-    char *enc_password = encrypt_data(password);
+
     stmt->row_to_insert.id = id;
     strcpy(stmt->row_to_insert.usecase, usecase);
     strcpy(stmt->row_to_insert.username, username);
-    strcpy(stmt->row_to_insert.password, enc_password);
+    strcpy(stmt->row_to_insert.password, password);
 
     return PREPARE_SUCCESS;
 }
