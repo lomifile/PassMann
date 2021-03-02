@@ -10,7 +10,7 @@
 #include <stdbool.h>
 
 #define DIRNAME ".passmann"
-#define FILENAME ".passmann/database.db"
+#define FILENAME "database.db"
 
 #define COLUMN_USECASE_SIZE  255
 #define COLUMN_USERNAME_SIZE 255

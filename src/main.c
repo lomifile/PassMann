@@ -92,13 +92,7 @@ int main() {
     print_welcome();
     time_t now = time(NULL);
     append_log(ctime(&now), "PassMann started");
-    bool dir_result = check_dir();
-    if (dir_result){
-        printf("All checks complete! \n");
-    } else {
-        printf("Creating directory for storing data \n");
-    }
+
     Table *tbl = db_open(FILENAME);
-    fflush(stdin);
     start_db(tbl);
 }
