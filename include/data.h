@@ -17,12 +17,6 @@
 #define COLUMN_PASSWORD_SIZE 255
 #define TABLE_MAX_PAGES 100
 
-typedef struct {
-    char *buffer;
-    size_t buffer_length;
-    ssize_t input_length;
-} InputBuffer;
-
 typedef enum {
     EXECUTE_SUCCESS,
     EXECUTE_DUPLICATE_KEY,
@@ -44,7 +38,6 @@ typedef enum {
 typedef enum {
     STATEMENT_INSERT,
     STATEMENT_SELECT,
-    STATEMENT_SELECT_RAW,
     STATEMENT_SAVE_DATA,
 } StatementType;
 

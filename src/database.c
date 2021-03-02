@@ -21,7 +21,6 @@
 #include <sodium/randombytes.h>
 
 #include "database.h"
-#include "encryption.h"
 #include "log.h"
 #include "input.h"
 
@@ -96,15 +95,9 @@ const uint32_t LEAF_NODE_RIGHT_SPLIT_COUNT = (LEAF_NODE_MAX_CELLS + 1) / 2;
 const uint32_t LEAF_NODE_LEFT_SPLIT_COUNT =
         (LEAF_NODE_MAX_CELLS + 1) - LEAF_NODE_RIGHT_SPLIT_COUNT;
 
-void print_row_encrypted(Row *selected_row) {
-    printf("============================================\n");
-    printf("%10d|%10s|%10s|%10s|\n", selected_row->id, selected_row->usecase, selected_row->username, selected_row->password);
-}
-
 void print_row(Row *selected_row) {
-    char *dec_password = decrypt_data(selected_row->password);
     printf("============================================\n");
-    printf("%10d|%10s|%10s|%10s|\n", selected_row->id, selected_row->usecase, selected_row->username, dec_password);
+    printf("%10d|%10s|%10s|%10s|\n", selected_row->id, selected_row->usecase, selected_row->username, selected_row->username);
 }
 
 NodeType get_node_type(void *node) {
@@ -465,15 +458,6 @@ Table *db_open(const char *filename) {
     return tbl;
 }
 
-InputBuffer *new_input_buffer() {
-    InputBuffer *input_buffer = malloc(sizeof(InputBuffer));
-    input_buffer->buffer = NULL;
-    input_buffer->buffer_length = 0;
-    input_buffer->input_length = 0;
-
-    return input_buffer;
-}
-
 void print_prompt() { printf("passman> "); }
 
 void print_help() {
@@ -491,26 +475,6 @@ void print_help() {
            "select -> Shows you your stored data into system\n"
            "raw -> Show you data with encryption\n"
            "save -> Flushes and reloads database\n");
-}
-
-void read_input(InputBuffer *input_buffer) {
-    ssize_t bytes_read =
-            getline(&(input_buffer->buffer), &(input_buffer->buffer_length), stdin);
-
-    if (bytes_read <= 0) {
-        printf("Error reading input\n");
-        exit(EXIT_FAILURE);
-    }
-
-    // Ignore trailing newline
-    input_buffer->input_length = bytes_read - 1;
-    input_buffer->buffer[bytes_read - 1] = 0;
-    fflush(stdin);
-}
-
-void close_input_buffer(InputBuffer *input_buffer) {
-    free(input_buffer->buffer);
-    free(input_buffer);
 }
 
 void pager_flush(Pager *ptr, uint32_t page_num) {
@@ -714,11 +678,6 @@ PrepareResult prepare_statement(InputBuffer *input_buffer,
         append_log(time_now(), "Insert new data");
         return prepare_insert(input_buffer, stmt, tbl);
     }
-    if (strcmp(input_buffer->buffer, "raw") == 0) {
-        stmt->type = STATEMENT_SELECT_RAW;
-        append_log(time_now(), "Raw select");
-        return PREPARE_SUCCESS;
-    }
     if (strcmp(input_buffer->buffer, "select") == 0) {
         stmt->type = STATEMENT_SELECT;
         append_log(time_now(), "Selected data");
@@ -918,21 +877,6 @@ ExecuteResult execute_insert(Statement *stmt, Table *tbl) {
     return EXECUTE_SUCCESS;
 }
 
-ExecuteResult execute_raw_select(Table *tbl) {
-    Cursor *ptr = table_start(tbl);
-
-    ROW_TABLE_HEADER;
-    Row rowData;
-    while (!(ptr->end_of_table)) {
-        deserialize_row(cursor_value(ptr), &rowData);
-        print_row_encrypted(&rowData);
-        cursor_advance(ptr);
-    }
-
-    free(ptr);
-    return EXECUTE_SUCCESS;
-}
-
 ExecuteResult execute_select(Table *tbl) {
     Cursor *ptr = table_start(tbl);
 
@@ -999,8 +943,6 @@ ExecuteResult execute_statement(Statement *stmt, Table *tbl) {
             return execute_insert(stmt, tbl);
         case (STATEMENT_SELECT):
             return execute_select(tbl);
-        case (STATEMENT_SELECT_RAW):
-            return execute_raw_select(tbl);
         case (STATEMENT_SAVE_DATA):
             return execute_save_data(tbl);
     }
