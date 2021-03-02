@@ -1,7 +1,4 @@
-cd include/libsodium
-make && make check
-sudo make install
-cd ../..
+sudo apt install libsodium-dev
 cmake -B debug-build
 cd debug-build
 make
