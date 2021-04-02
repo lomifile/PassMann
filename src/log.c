@@ -7,10 +7,11 @@
 
 #include "log.h"
 
-void create_log_file(){
-    FILE* fp = fopen(LOG_FILE , "w");
+void create_log_file()
+{
+    FILE *fp = fopen(LOG_FILE, "w");
     char t_now[30];
-    if(fp == NULL)
+    if (fp == NULL)
         exit(EXIT_FAILURE);
 
     time_t t = time(NULL);
@@ -18,41 +19,58 @@ void create_log_file(){
     fclose(fp);
 }
 
-void display_log(){
-    FILE* fp = fopen(LOG_FILE, "r");
-    if(fp == NULL) {
+void display_log()
+{
+    FILE *fp = fopen(LOG_FILE, "r");
+    if (fp == NULL)
+    {
         printf("There was a problem!");
         exit(EXIT_FAILURE);
     }
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
-    while((read = getline(&line,&len,fp))!=-1) {
+    while ((read = getline(&line, &len, fp)) != -1)
+    {
         printf("%s", line);
     }
     fclose(fp);
-    if(line)
+    if (line)
         free(line);
 }
 
-void append_log(char*date ,char* input){
+void append_log(char *date, char *input)
+{
     strtok(date, "\n");
-    FILE* fp = fopen(LOG_FILE, "a");
-    if(fp == NULL)
+    FILE *fp = fopen(LOG_FILE, "a");
+    if (fp == NULL)
         exit(EXIT_FAILURE);
 
     fprintf(fp, "%s --------> %s\n", date, input);
     fclose(fp);
 }
 
-bool check_log(){
-    if(access(LOG_FILE, F_OK) != -1)
+bool check_log()
+{
+    if (access(LOG_FILE, F_OK) != -1)
         return true;
     else
         return false;
 }
 
-char* time_now(){
+char *formated_string(char *format, ...)
+{
+    char *string = (char *)malloc(sizeof format);
+    int done;
+    va_list args;
+    va_start(args, format);
+    done = vsnprintf(string, (uint32_t)strlen(format), format, args);
+    va_end(args);
+    return string;
+}
+
+char *time_now()
+{
     time_t now = time(NULL);
     return ctime(&now);
 }

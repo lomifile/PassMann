@@ -5,7 +5,8 @@
 #ifndef PASSMANN_INPUT_H
 #define PASSMANN_INPUT_H
 
-typedef struct {
+typedef struct
+{
     char *buffer;
     size_t buffer_length;
     ssize_t input_length;

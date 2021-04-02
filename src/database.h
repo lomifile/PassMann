@@ -8,8 +8,8 @@
 #include <include/data.h>
 #include "input.h"
 
-#define size_of_attribute(Struct, Attribute) sizeof(((Struct*)0)->Attribute)
-#define ROW_TABLE_HEADER printf("%10s|%10s|%10s|%10s|\n","ID","Usecase","Username","Password")
+#define size_of_attribute(Struct, Attribute) sizeof(((Struct *)0)->Attribute)
+#define ROW_TABLE_HEADER printf("%10s|%10s|%10s|%10s|\n", "ID", "Usecase", "Username", "Password")
 
 extern InputBuffer Input_Buffer;
 extern ExecuteResult Execute_Result;

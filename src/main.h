@@ -5,5 +5,4 @@
 #ifndef PASSMANN_MAIN_H
 #define PASSMANN_MAIN_H
 
-
 #endif //PASSMANN_MAIN_H

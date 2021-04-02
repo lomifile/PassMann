@@ -12,22 +12,25 @@
 #define DIRNAME ".passmann"
 #define FILENAME "database.db"
 
-#define COLUMN_USECASE_SIZE  255
+#define COLUMN_USECASE_SIZE 255
 #define COLUMN_USERNAME_SIZE 255
 #define COLUMN_PASSWORD_SIZE 255
 #define TABLE_MAX_PAGES 100
 
-typedef enum {
+typedef enum
+{
     EXECUTE_SUCCESS,
     EXECUTE_DUPLICATE_KEY,
 } ExecuteResult;
 
-typedef enum {
+typedef enum
+{
     META_COMMAND_SUCCESS,
     META_COMMAND_UNRECOGNIZED_COMMAND
 } MetaCommandResult;
 
-typedef enum {
+typedef enum
+{
     PREPARE_SUCCESS,
     PREPARE_NEGATIVE_ID,
     PREPARE_STRING_TOO_LONG,
@@ -35,45 +38,53 @@ typedef enum {
     PREPARE_UNRECOGNIZED_STATEMENT
 } PrepareResult;
 
-typedef enum {
+typedef enum
+{
     STATEMENT_INSERT,
     STATEMENT_SELECT,
     STATEMENT_SAVE_DATA,
 } StatementType;
 
-typedef struct {
+typedef struct
+{
     uint32_t id;
     char usecase[COLUMN_USECASE_SIZE + 1];
     char username[COLUMN_USERNAME_SIZE + 1];
     char password[COLUMN_PASSWORD_SIZE + 1];
 } Row;
 
-typedef struct {
+typedef struct
+{
     StatementType type;
-    Row row_to_insert;  // only used by insert statement
+    Row row_to_insert; // only used by insert statement
 } Statement;
 
-typedef struct {
+typedef struct
+{
     int file_descriptor;
     uint32_t file_length;
     uint32_t num_pages;
     void *pages[TABLE_MAX_PAGES];
 } Pager;
 
-typedef struct {
+typedef struct
+{
     Pager *pager;
     uint32_t root_page_num;
 } Table;
 
-typedef struct {
+typedef struct
+{
     Table *table;
     uint32_t page_num;
     uint32_t cell_num;
-    bool end_of_table;  // Indicates a position one past the last element
+    bool end_of_table; // Indicates a position one past the last element
 } Cursor;
 
-typedef enum {
-    NODE_INTERNAL, NODE_LEAF
+typedef enum
+{
+    NODE_INTERNAL,
+    NODE_LEAF
 } NodeType;
 
 #endif //PASSMANN_DATA_H
