@@ -31,6 +31,7 @@ bool check_dir()
     else
     {
         printf("There was an error while trying to open dir");
+        append_log(time_now(), "There was an error while trying to open dir");
         exit(EXIT_FAILURE);
     }
 }

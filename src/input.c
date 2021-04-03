@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
+#include "log.h"
 #include "input.h"
 
 int int_input(int *number)
@@ -16,6 +17,7 @@ int int_input(int *number)
     if (!fgets(buf, 1024, stdin))
     {
         // reading input failed:
+        append_log(time_now(), "Reading INTEGER input failed!");
         return 0;
     }
 
@@ -27,17 +29,20 @@ int int_input(int *number)
     if (errno == ERANGE)
     {
         // out of range for a long
+        append_log(time_now(), "Out of range for a long");
         return 0;
     }
     if (endptr == buf)
     {
         // no character was read
+        append_log(time_now(), "No character was read");
         return 0;
     }
     if (*endptr && *endptr != '\n')
     {
         // *endptr is neither end of string nor newline,
         // so we didn't convert the *whole* input
+        append_log(time_now(), "Endptr is neither end of string nor newline, so we didn't convert the *whole* input");
         return 0;
     }
     if (a > INT_MAX || a < INT_MIN)
@@ -65,6 +70,7 @@ void read_input(InputBuffer *input_buffer)
     if (bytes_read <= 0)
     {
         printf("Error reading input\n");
+        append_log(time_now(), "Error reading input!");
         exit(EXIT_FAILURE);
     }
 

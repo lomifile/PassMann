@@ -148,7 +148,7 @@ uint32_t *internal_node_child(void *node, uint32_t child_num)
     if (child_num > num_keys)
     {
         printf("Tried to access child_num %d > num_keys %d\n", child_num, num_keys);
-        formated_string("Tried to access child_num %d > num_keys %d", child_num, num_keys);
+        append_log(time_now(), formated_string("Tried to access child_num %d > num_keys %d", child_num, num_keys));
         exit(EXIT_FAILURE);
     }
     else if (child_num == num_keys)
@@ -218,6 +218,8 @@ void *get_page(Pager *ptr, uint32_t page_num)
     {
         printf("Tried to fetch page number out of bounds. %d > %d\n", page_num,
                TABLE_MAX_PAGES);
+        append_log(time_now(), formated_string("Tried to fetch page number out of bounds. %d > %d", page_num,
+                                               TABLE_MAX_PAGES));
         exit(EXIT_FAILURE);
     }
 
@@ -240,6 +242,7 @@ void *get_page(Pager *ptr, uint32_t page_num)
             if (bytes_read == -1)
             {
                 printf("Error reading file: %d\n", errno);
+                append_log(time_now(), formated_string("Error reading file: %d", errno));
                 exit(EXIT_FAILURE);
             }
         }
@@ -497,6 +500,7 @@ Pager *pager_open(const char *filename)
     if (file_length % PAGE_SIZE != 0)
     {
         printf("Db file is not a whole number of pages. Corrupt file.\n");
+        append_log(time_now(), "Db file is not a whole number of pages. Corrupt file.");
         exit(EXIT_FAILURE);
     }
 
@@ -554,6 +558,7 @@ void pager_flush(Pager *ptr, uint32_t page_num)
     if (ptr->pages[page_num] == NULL)
     {
         printf("Tried to flush null page\n");
+        append_log(time_now(), "Tried to flush null page");
         exit(EXIT_FAILURE);
     }
 
@@ -594,6 +599,7 @@ void db_close(Table *tbl)
     if (result == -1)
     {
         printf("Error closing db file.\n");
+        append_log(time_now(), "Error closing db file.");
         exit(EXIT_FAILURE);
     }
     for (uint32_t i = 0; i < TABLE_MAX_PAGES; i++)
@@ -871,6 +877,7 @@ void internal_node_insert(Table *tbl, uint32_t parent_page_num,
     if (original_num_keys >= INTERNAL_NODE_MAX_CELLS)
     {
         printf("Need to implement splitting internal node\n");
+        append_log(time_now(), "Need to implement splitting internal node");
         exit(EXIT_FAILURE);
     }
 
