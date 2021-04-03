@@ -266,6 +266,24 @@ void indent(uint32_t level)
     }
 }
 
+uint32_t num_tree(Pager *ptr, uint32_t page_num)
+{
+    void *node = get_page(ptr, page_num);
+    uint32_t num_keys;
+
+    switch (get_node_type(node))
+    {
+    case (NODE_LEAF):
+        num_keys = *leaf_node_num_cells(node);
+        break;
+
+    case (NODE_INTERNAL):
+        num_keys = *internal_node_num_keys(node);
+        break;
+    }
+    return num_keys;
+}
+
 void print_tree(Pager *ptr, uint32_t page_num, uint32_t indentation_level)
 {
     void *node = get_page(ptr, page_num);
@@ -676,14 +694,15 @@ void randomPasswordGeneration(int N)
 uint32_t get_last_id(Table *tbl)
 {
     Cursor *ptr = table_start(tbl);
-    uint32_t last_id = 0;
+    uint32_t last_id = 0, num;
     Row check_row;
     while (!(ptr->end_of_table))
     {
         deserialize_row(cursor_value(ptr), &check_row);
         cursor_advance(ptr);
     }
-    if (check_row.id == NULL && ptr->end_of_table)
+    num = num_tree(tbl->pager, 0);
+    if (num == 0)
     {
         last_id = 0;
     }
@@ -766,17 +785,17 @@ PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *stmt, Table *
     stmt->type = STATEMENT_INSERT;
     uint32_t id;
     char *keyword = strtok(input_buffer->buffer, " ");
-    char *id_string = strtok(NULL, " ");
+    // char *id_string = strtok(NULL, " ");
     char *usecase = strtok(NULL, " ");
     char *username = strtok(NULL, " ");
     char *password = strtok(NULL, " ");
 
-    if (id_string == NULL || username == NULL || password == NULL || usecase == NULL)
+    if (username == NULL || password == NULL || usecase == NULL)
     {
         return PREPARE_SYNTAX_ERROR;
     }
 
-    id = (uint32_t)atoi(id_string);
+    id = get_last_id(tbl) + 1;
     if (id < 0)
     {
         return PREPARE_NEGATIVE_ID;
