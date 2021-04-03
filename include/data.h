@@ -87,4 +87,6 @@ typedef enum
     NODE_LEAF
 } NodeType;
 
+char password[50];
+
 #endif //PASSMANN_DATA_H

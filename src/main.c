@@ -10,34 +10,22 @@
 #include <stdbool.h>
 #include <dirent.h>
 
+#include "encryption.h"
 #include "database.h"
 #include "log.h"
 
-bool check_dir()
-{
-    struct stat st = {0};
-    DIR *dir = opendir(DIRNAME);
-    if (dir)
-    {
-        closedir(dir);
-        return true;
-    }
-    else if (ENOENT == errno)
-    {
-        if (stat(DIRNAME, &st) == -1)
-            mkdir(DIRNAME, 0700);
-        return true;
-    }
-    else
-    {
-        printf("There was an error while trying to open dir");
-        append_log(time_now(), "There was an error while trying to open dir");
-        exit(EXIT_FAILURE);
-    }
-}
-
 void start_db(Table *tbl)
 {
+    printf("\n"
+           "MAKE SURE TO REMEBER YOUR MASTER PASSWORD AT ALL TIMES!\n"
+           "If you use CTRL - c to exit the program no data will be saved!\n"
+           "\n"
+           "\n");
+    if (!(strlen(password) > 0))
+    {
+        printf("Input master passowrd > ");
+        fgets(password, sizeof password, stdin);
+    }
     InputBuffer *input_buffer = new_input_buffer();
     while (true)
     {
@@ -91,9 +79,9 @@ void start_db(Table *tbl)
 void print_welcome()
 {
     printf(
-        "<<PassMan>> \n"
+        "<<PassMann>> \n"
         "Welcome to PassMan \n"
-        "Version 1.0 by Filip Ivanusec \n"
+        "Version 1.0.1 by Filip Ivanusec \n"
         "\n"
         "\n"
         "Use .help for simple tutorial on how to use PassMann \n");
@@ -102,8 +90,15 @@ void print_welcome()
 int main()
 {
     print_welcome();
-    time_t now = time(NULL);
-    append_log(ctime(&now), "PassMann started");
+    append_log(time_now(), "PassMann started");
+    int file = check_db_file(FILENAME);
+
+    if (file < 0)
+    {
+        printf("File doesn't exist\n"
+               "Creating new database file\n");
+        append_log(time_now(), "Created new db file");
+    }
 
     Table *tbl = db_open(FILENAME);
     start_db(tbl);
