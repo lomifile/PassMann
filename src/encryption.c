@@ -4,6 +4,10 @@
 #include "encryption.h"
 #include "log.h"
 
+/**
+ * Encrypts file using crypto secret box from libsodium 
+ */
+
 int encrypt(const char *target_file, const char *source_file,
             const unsigned char key[crypto_secretstream_xchacha20poly1305_KEYBYTES])
 {
@@ -34,6 +38,10 @@ int encrypt(const char *target_file, const char *source_file,
     fclose(fp_s);
     return 0;
 }
+
+/**
+ * Decrypts the file
+ */
 
 int decrypt(const char *target_file, const char *source_file,
             const unsigned char key[crypto_secretstream_xchacha20poly1305_KEYBYTES])

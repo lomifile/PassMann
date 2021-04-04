@@ -6,6 +6,15 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdint.h>
+#include <time.h>
+#include <malloc.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <stdbool.h>
+#include <errno.h>
+#include <stdarg.h>
+
 #include "log.h"
 #include "input.h"
 

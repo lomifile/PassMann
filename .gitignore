@@ -2,6 +2,6 @@ cmake-build-debug
 .idea
 build
 database.db
-User.dat
 debug-build
 passmannlog.txt
+.vscode

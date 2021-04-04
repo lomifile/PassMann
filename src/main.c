@@ -1,11 +1,3 @@
-/**
- * Main program
- * 
- * Inputs data for either creating the user or for authenticating one
- * If the user is authenticated user is stored into session and the main database
- * is starting.
- */
-
 #include <stdio.h>
 #include <stdbool.h>
 #include <dirent.h>

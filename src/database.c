@@ -1,15 +1,3 @@
-/**
- * Database
- * 
- * This is main database suroce with all manipulations for storing data into database
- * Database can be saved to files and stored for safety.
- * 
- * TODO:
- *  1.Need to create function and command to retrive that file
- *  2.Need to create logging
- *
- **/
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -18,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sodium/randombytes.h>
 
 #include "database.h"
@@ -563,7 +552,7 @@ Table *db_open(const char *filename)
     {
         if (!(strlen(password) > 0))
         {
-            printf("Input master passowrd > ");
+            printf("Input master passowrd> ");
             fgets(password, sizeof password, stdin);
         }
         unsigned char key[crypto_secretstream_xchacha20poly1305_KEYBYTES];
@@ -585,7 +574,7 @@ Table *db_open(const char *filename)
             append_log(time_now(), "Key generation was a success!");
         }
 
-        if (decrypt(".tmp.db", filename, key) != 0)
+        if (decrypt(TEMP, filename, key) != 0)
         {
             printf("There was an error while decrypting file!!!\n"
                    "Plesae restart program!");
@@ -594,7 +583,7 @@ Table *db_open(const char *filename)
         }
     }
 
-    Pager *ptr = pager_open(".tmp.db");
+    Pager *ptr = pager_open(TEMP);
 
     Table *tbl = malloc(sizeof(Table));
     tbl->pager = ptr;
@@ -693,7 +682,7 @@ void db_close(Table *tbl)
     free(ptr);
     free(tbl);
 
-    if (check_db_file(".tmp.db") != 0)
+    if (check_db_file(TEMP) != 0)
     {
         printf("There was a problem with the file!\n");
         exit(EXIT_FAILURE);
@@ -719,12 +708,12 @@ void db_close(Table *tbl)
             append_log(time_now(), "Key generation was a success!");
         }
 
-        if (encrypt(FILENAME, ".tmp.db", key) != 0)
+        if (encrypt(FILENAME, TEMP, key) != 0)
         {
             printf("There was an error with encryption!");
             exit(EXIT_FAILURE);
         }
-        remove(".tmp.db");
+        remove(TEMP);
     }
 }
 
@@ -1201,7 +1190,7 @@ ExecuteResult execute_save_data(Table *tbl)
     free(ptr);
     free(tbl);
 
-    ptr = pager_open(".tmp.db");
+    ptr = pager_open(TEMP);
 
     tbl = malloc(sizeof(Table));
     tbl->pager = ptr;
