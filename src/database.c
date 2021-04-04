@@ -1,15 +1,3 @@
-/**
- * Database
- * 
- * This is main database suroce with all manipulations for storing data into database
- * Database can be saved to files and stored for safety.
- * 
- * TODO:
- *  1.Need to create function and command to retrive that file
- *  2.Need to create logging
- *
- **/
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -18,11 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sodium/randombytes.h>
 
 #include "database.h"
 #include "log.h"
 #include "input.h"
+#include "encryption.h"
 
 const uint32_t ID_SIZE = size_of_attribute(Row, id);
 const uint32_t USERNAME_SIZE = size_of_attribute(Row, username);
@@ -530,9 +520,70 @@ Pager *pager_open(const char *filename)
     return ptr;
 }
 
+bool is_Empty()
+{
+    FILE *fptr;
+    uint32_t size;
+    fptr = fopen(FILENAME, "rb");
+    if (fptr != NULL)
+    {
+        fseek(fptr, 0, SEEK_END);
+        size = ftell(fptr);
+        rewind(fptr);
+        fclose(fptr);
+    }
+
+    if (size == 0)
+    {
+        return true;
+    }
+    return false;
+}
+
 Table *db_open(const char *filename)
 {
-    Pager *ptr = pager_open(filename);
+    if (sodium_init() != 0)
+    {
+        append_log(time_now(), "Sodium init error");
+        exit(EXIT_FAILURE);
+    }
+
+    if (!is_Empty())
+    {
+        if (!(strlen(password) > 0))
+        {
+            printf("Input master passowrd> ");
+            fgets(password, sizeof password, stdin);
+        }
+        unsigned char key[crypto_secretstream_xchacha20poly1305_KEYBYTES];
+        unsigned char salt[crypto_pwhash_SALTBYTES];
+
+        sodium_memzero(salt, sizeof salt);
+
+        if (crypto_pwhash(key, sizeof key, password, strlen(password), salt,
+                          crypto_pwhash_OPSLIMIT_INTERACTIVE,
+                          crypto_pwhash_MEMLIMIT_INTERACTIVE,
+                          crypto_pwhash_ALG_DEFAULT) != 0)
+        {
+            append_log(time_now(), "Error while running argon2");
+            exit(EXIT_FAILURE);
+        }
+        else
+        {
+            printf("Key generation was a success!\n");
+            append_log(time_now(), "Key generation was a success!");
+        }
+
+        if (decrypt(TEMP, filename, key) != 0)
+        {
+            printf("There was an error while decrypting file!!!\n"
+                   "Plesae restart program!");
+            exit(EXIT_FAILURE);
+            remove(filename);
+        }
+    }
+
+    Pager *ptr = pager_open(TEMP);
 
     Table *tbl = malloc(sizeof(Table));
     tbl->pager = ptr;
@@ -551,7 +602,7 @@ Table *db_open(const char *filename)
     return tbl;
 }
 
-void print_prompt() { printf("passman> "); }
+void print_prompt() { printf("Passmann> "); }
 
 void print_help()
 {
@@ -565,9 +616,8 @@ void print_help()
            ".log -> Shows you the log of usage"
            "\n"
            "Data handling:\n"
-           "insert <ID> <USECASE> <USERNAME> <PASSWORD> -> Stores data into the system\n"
+           "insert <USECASE> <USERNAME> <PASSWORD> -> Stores data into the system\n"
            "select -> Shows you your stored data into system\n"
-           "raw -> Show you data with encryption\n"
            "save -> Flushes and reloads database\n");
 }
 
@@ -631,6 +681,40 @@ void db_close(Table *tbl)
     }
     free(ptr);
     free(tbl);
+
+    if (check_db_file(TEMP) != 0)
+    {
+        printf("There was a problem with the file!\n");
+        exit(EXIT_FAILURE);
+    }
+    else
+    {
+        unsigned char key[crypto_secretstream_xchacha20poly1305_KEYBYTES];
+        unsigned char salt[crypto_pwhash_SALTBYTES];
+
+        sodium_memzero(salt, sizeof salt);
+
+        if (crypto_pwhash(key, sizeof key, password, strlen(password), salt,
+                          crypto_pwhash_OPSLIMIT_INTERACTIVE,
+                          crypto_pwhash_MEMLIMIT_INTERACTIVE,
+                          crypto_pwhash_ALG_DEFAULT) != 0)
+        {
+            append_log(time_now(), "Error while running argon2");
+            exit(EXIT_FAILURE);
+        }
+        else
+        {
+            printf("Key generation was a success!\n");
+            append_log(time_now(), "Key generation was a success!");
+        }
+
+        if (encrypt(FILENAME, TEMP, key) != 0)
+        {
+            printf("There was an error with encryption!");
+            exit(EXIT_FAILURE);
+        }
+        remove(TEMP);
+    }
 }
 
 void randomPasswordGeneration(int N)
@@ -722,8 +806,8 @@ MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *tbl)
     {
         close_input_buffer(input_buffer);
         db_close(tbl);
-        append_log(time_now(), "PassMan exit");
-        printf("Exiting passman\n");
+        append_log(time_now(), "PassMann exit");
+        printf("Exiting Passmann\n");
         exit(EXIT_SUCCESS);
     }
     else if (strcmp(input_buffer->buffer, ".btree") == 0)
@@ -1106,7 +1190,7 @@ ExecuteResult execute_save_data(Table *tbl)
     free(ptr);
     free(tbl);
 
-    ptr = pager_open(FILENAME);
+    ptr = pager_open(TEMP);
 
     tbl = malloc(sizeof(Table));
     tbl->pager = ptr;

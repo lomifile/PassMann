@@ -11,6 +11,7 @@
 
 #define DIRNAME ".passmann"
 #define FILENAME "database.db"
+#define TEMP ".tmp.db"
 
 #define COLUMN_USECASE_SIZE 255
 #define COLUMN_USERNAME_SIZE 255
@@ -86,5 +87,7 @@ typedef enum
     NODE_INTERNAL,
     NODE_LEAF
 } NodeType;
+
+char password[50];
 
 #endif //PASSMANN_DATA_H

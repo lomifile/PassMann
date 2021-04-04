@@ -1,4 +1,4 @@
-cmake -B debug-build
-cd debug-build
+cmake -B build
+cd build
 make
 make package
