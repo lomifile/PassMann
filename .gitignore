@@ -5,4 +5,5 @@ database.db
 debug-build
 passmannlog.txt
 .vscode
-*.c.swp
+src/*.c.swp
+include/*.c.swp
