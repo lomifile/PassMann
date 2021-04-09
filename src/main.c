@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <dirent.h>
+#include <string.h>
 
 #include "encryption.h"
 #include "database.h"
