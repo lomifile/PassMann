@@ -87,8 +87,8 @@ const uint32_t LEAF_NODE_LEFT_SPLIT_COUNT =
 
 void print_row(Row *selected_row)
 {
-    printf("============================================\n");
-    printf("%10d|%10s|%10s|%10s|\n", selected_row->id, selected_row->usecase, selected_row->username, selected_row->username);
+    printf("=====================================================\n");
+    printf("%10d|%10s|%10s|%20s|\n", selected_row->id, selected_row->usecase, selected_row->username, selected_row->password);
 }
 
 NodeType get_node_type(void *node)
@@ -869,12 +869,11 @@ PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *stmt, Table *
     stmt->type = STATEMENT_INSERT;
     uint32_t id;
     char *keyword = strtok(input_buffer->buffer, " ");
-    // char *id_string = strtok(NULL, " ");
     char *usecase = strtok(NULL, " ");
     char *username = strtok(NULL, " ");
     char *password = strtok(NULL, " ");
 
-    if (username == NULL || password == NULL || usecase == NULL)
+    if (usecase == NULL || username == NULL || password == NULL)
     {
         return PREPARE_SYNTAX_ERROR;
     }
@@ -885,6 +884,10 @@ PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *stmt, Table *
         return PREPARE_NEGATIVE_ID;
     }
     if (strlen(username) > COLUMN_USERNAME_SIZE)
+    {
+        return PREPARE_STRING_TOO_LONG;
+    }
+    if(strlen(usecase) > COLUMN_USECASE_SIZE)
     {
         return PREPARE_STRING_TOO_LONG;
     }
