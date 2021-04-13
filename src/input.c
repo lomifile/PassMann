@@ -65,6 +65,33 @@ int int_input(int *number)
     return 1;
 }
 
+char *read_line(FILE *f)
+{
+    int cap = 32, next = 0, c;
+    char *p = malloc(cap);
+    while (1)
+    {
+        if (next == cap)
+        {
+            p = realloc(p, cap *= 2);
+        }
+        c = fgetc(f);
+        if (c == EOF || c == '\n')
+        {
+            p[next++] = 0;
+            break;
+        }
+        p[next++] = c;
+    }
+    if (c == EOF && next == 1)
+    {
+        free(p);
+        p = NULL;
+    }
+
+    return p;
+}
+
 void close_input_buffer(InputBuffer *input_buffer)
 {
     free(input_buffer->buffer);

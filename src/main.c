@@ -7,7 +7,7 @@
 #include "database.h"
 #include "log.h"
 
-void start_db(Table *tbl)
+static void start_db(Table *tbl)
 {
     printf("\n"
            "MAKE SURE TO REMEBER YOUR MASTER PASSWORD AT ALL TIMES!\n"
@@ -69,7 +69,7 @@ void start_db(Table *tbl)
     }
 }
 
-void print_welcome()
+static void print_welcome()
 {
     printf(
         "<<PassMann>> \n"

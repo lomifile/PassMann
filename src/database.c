@@ -613,12 +613,14 @@ void print_help()
            ".constants -> Shows you the constants\n"
            ".exit -> Quits the program and flushes the database\n"
            ".passgen -> Generates password if you want one\n"
-           ".log -> Shows you the log of usage"
+           ".log -> Shows you the log of usage\n"
+           ".lastid -> Prints the last ID in table\n"
            "\n"
            "Data handling:\n"
            "insert <USECASE> <USERNAME> <PASSWORD> -> Stores data into the system\n"
            "select -> Shows you your stored data into system\n"
-           "save -> Flushes and reloads database\n");
+           "save -> Flushes and reloads database\n"
+           "find -> Filter data by usecase\n");
 }
 
 void pager_flush(Pager *ptr, uint32_t page_num)
@@ -887,7 +889,7 @@ PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *stmt, Table *
     {
         return PREPARE_STRING_TOO_LONG;
     }
-    if(strlen(usecase) > COLUMN_USECASE_SIZE)
+    if (strlen(usecase) > COLUMN_USECASE_SIZE)
     {
         return PREPARE_STRING_TOO_LONG;
     }
@@ -924,7 +926,18 @@ PrepareResult prepare_statement(InputBuffer *input_buffer,
         append_log(time_now(), "Saved data");
         return PREPARE_SUCCESS;
     }
-
+    if (strcmp(input_buffer->buffer, "find") == 0)
+    {
+        stmt->type = STATEMENT_FIND;
+        append_log(time_now(), "Found data");
+        return PREPARE_SUCCESS;
+    }
+    if (strcmp(input_buffer->buffer, "clear") == 0)
+    {
+        stmt->type = STATEMENT_CLEAR;
+        append_log(time_now(), "Clear screen");
+        return PREPARE_SUCCESS;
+    }
     return PREPARE_UNRECOGNIZED_STATEMENT;
 }
 
@@ -1117,6 +1130,33 @@ void leaf_node_insert(Cursor *ptr, uint32_t keyValue, Row *value)
     serialize_row(value, leaf_node_value(node, ptr->cell_num));
 }
 
+ExecuteResult execute_find(Statement *stmt, Table *tbl)
+{
+    char *filter; //uscase filter
+    printf("Input your filter usecase> ");
+    filter = read_line(stdin);
+
+    Cursor *ptr = table_start(tbl);
+    Row rowData;
+    while (!(ptr->end_of_table))
+    {
+        deserialize_row(cursor_value(ptr), &rowData);
+        if (strcmp(filter, rowData.usecase) == 0)
+        {
+            print_row(&rowData);
+        }
+        cursor_advance(ptr);
+    }
+    free(ptr);
+    return EXECUTE_SUCCESS;
+}
+
+ExecuteResult execute_clear()
+{
+    system("clear");
+    return EXECUTE_SUCCESS;
+}
+
 ExecuteResult execute_insert(Statement *stmt, Table *tbl)
 {
     Row *row_to_insert = &(stmt->row_to_insert);
@@ -1220,7 +1260,11 @@ ExecuteResult execute_statement(Statement *stmt, Table *tbl)
         return execute_insert(stmt, tbl);
     case (STATEMENT_SELECT):
         return execute_select(tbl);
+    case (STATEMENT_FIND):
+        return execute_find(stmt, tbl);
     case (STATEMENT_SAVE_DATA):
         return execute_save_data(tbl);
+    case (STATEMENT_CLEAR):
+        return execute_clear();
     }
 }
