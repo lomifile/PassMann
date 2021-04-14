@@ -620,7 +620,7 @@ void print_help()
            "insert <USECASE> <USERNAME> <PASSWORD> -> Stores data into the system\n"
            "select -> Shows you your stored data into system\n"
            "save -> Flushes and reloads database\n"
-           "find -> Filter data by usecase\n");
+           "find <USECASE> -> Filter data by usecase\n");
 }
 
 void pager_flush(Pager *ptr, uint32_t page_num)
@@ -866,6 +866,30 @@ MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *tbl)
     }
 }
 
+PrepareResult prepare_delete(InputBuffer *input_buffer, Statement *stmt, Table *tbl)
+{
+    stmt->type = STATEMENT_DELETE;
+    uint32_t id;
+
+    char *keyword = strtok(input_buffer->buffer, " ");
+    char *id_string = strtok(NULL, " ");
+
+    if (id_string == NULL)
+    {
+        return PREPARE_SYNTAX_ERROR;
+    }
+
+    id = atoi(id_string);
+    if (id < 0)
+    {
+        return PREPARE_NEGATIVE_ID;
+    }
+
+    strcpy(stmt->row_to_delete.id, id);
+
+    return PREPARE_SUCCESS;
+}
+
 PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *stmt, Table *tbl)
 {
     stmt->type = STATEMENT_INSERT;
@@ -906,6 +930,24 @@ PrepareResult prepare_insert(InputBuffer *input_buffer, Statement *stmt, Table *
     return PREPARE_SUCCESS;
 }
 
+PrepareResult prepare_find(InputBuffer *input_buffer, Statement *stmt, Table *tbl)
+{
+    stmt->type = STATEMENT_FIND;
+    char *keyword = strtok(input_buffer->buffer, " ");
+    char *filter = strtok(NULL, " ");
+    if (filter == NULL)
+    {
+        return PREPARE_SYNTAX_ERROR;
+    }
+
+    if (strlen(filter) > COLUMN_USECASE_SIZE)
+    {
+        return PREPARE_STRING_TOO_LONG;
+    }
+    strcpy(stmt->row_to_filter.usecase, filter);
+    return PREPARE_SUCCESS;
+}
+
 PrepareResult prepare_statement(InputBuffer *input_buffer,
                                 Statement *stmt, Table *tbl)
 {
@@ -926,11 +968,10 @@ PrepareResult prepare_statement(InputBuffer *input_buffer,
         append_log(time_now(), "Saved data");
         return PREPARE_SUCCESS;
     }
-    if (strcmp(input_buffer->buffer, "find") == 0)
+    if (strncmp(input_buffer->buffer, "find", 2) == 0)
     {
-        stmt->type = STATEMENT_FIND;
         append_log(time_now(), "Found data");
-        return PREPARE_SUCCESS;
+        return prepare_find(input_buffer, stmt, tbl);
     }
     if (strcmp(input_buffer->buffer, "clear") == 0)
     {
@@ -938,6 +979,11 @@ PrepareResult prepare_statement(InputBuffer *input_buffer,
         append_log(time_now(), "Clear screen");
         return PREPARE_SUCCESS;
     }
+    // if (strncmp(input_buffer->buffer, "delete", 2) == 0)
+    // {
+    //     append_log(time_now(), "Delete testing");
+    //     return prepare_delete(input_buffer, stmt, tbl);
+    // }
     return PREPARE_UNRECOGNIZED_STATEMENT;
 }
 
@@ -1130,18 +1176,57 @@ void leaf_node_insert(Cursor *ptr, uint32_t keyValue, Row *value)
     serialize_row(value, leaf_node_value(node, ptr->cell_num));
 }
 
+void leaf_node_delete(Cursor *ptr, uint32_t keyValue, Row *value)
+{
+    uint32_t flag = 0;
+    void *node = get_page(ptr->table->pager, ptr->page_num);
+    uint32_t num_cells = *leaf_node_num_cells(node);
+    for (uint32_t i = num_cells; i > ptr->cell_num; i--)
+    {
+        if (keyValue == value->id)
+        {
+            if (*(leaf_node_num_cells(ptr)) -= 1)
+            {
+                memcpy(leaf_node_cell(node, i), leaf_node_cell(node, i - 1),
+                       LEAF_NODE_CELL_SIZE);
+            }
+        }
+    }
+}
+
+ExecuteResult execute_delete(Statement *stmt, Table *tbl)
+{
+    Row *row_to_delete = &(stmt->row_to_delete);
+    uint32_t key_to_delete = row_to_delete->id;
+    Cursor *ptr = table_find(tbl, key_to_delete);
+
+    void *node = get_page(tbl->pager, ptr->page_num);
+    uint32_t num_cells = *leaf_node_num_cells(node);
+
+    if (ptr->cell_num < num_cells)
+    {
+        uint32_t key_at_index = *leaf_node_key(node, ptr->cell_num);
+        if (key_at_index == key_to_delete)
+        {
+            return EXECUTE_DUPLICATE_KEY;
+        }
+    }
+
+    leaf_node_delete(ptr, row_to_delete->id, row_to_delete);
+
+    free(ptr);
+
+    return EXECUTE_SUCCESS;
+}
+
 ExecuteResult execute_find(Statement *stmt, Table *tbl)
 {
-    char *filter; //uscase filter
-    printf("Input your filter usecase> ");
-    filter = read_line(stdin);
-
     Cursor *ptr = table_start(tbl);
     Row rowData;
     while (!(ptr->end_of_table))
     {
         deserialize_row(cursor_value(ptr), &rowData);
-        if (strcmp(filter, rowData.usecase) == 0)
+        if (strcmp(stmt->row_to_filter.usecase, rowData.usecase) == 0)
         {
             print_row(&rowData);
         }
@@ -1153,8 +1238,10 @@ ExecuteResult execute_find(Statement *stmt, Table *tbl)
 
 ExecuteResult execute_clear()
 {
-    system("clear");
-    return EXECUTE_SUCCESS;
+    if (system("clear") == 0)
+        return EXECUTE_SUCCESS;
+    else
+        return EXECUTE_ERROR;
 }
 
 ExecuteResult execute_insert(Statement *stmt, Table *tbl)
@@ -1264,6 +1351,8 @@ ExecuteResult execute_statement(Statement *stmt, Table *tbl)
         return execute_find(stmt, tbl);
     case (STATEMENT_SAVE_DATA):
         return execute_save_data(tbl);
+    case (STATEMENT_DELETE):
+        return execute_delete(stmt, tbl);
     case (STATEMENT_CLEAR):
         return execute_clear();
     }

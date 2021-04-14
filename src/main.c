@@ -60,10 +60,15 @@ static void start_db(Table *tbl)
         switch (execute_statement(&stmt, tbl))
         {
         case (EXECUTE_SUCCESS):
-            printf("Executed.\n");
+            append_log(time_now(), "Exectued statement");
             break;
         case (EXECUTE_DUPLICATE_KEY):
             printf("Error: Duplicate key.\n");
+            append_log(time_now(), "Error: Duplicate key.");
+            break;
+        case (EXECUTE_ERROR):
+            printf("There was an error while trying to execute command!\n");
+            append_log(time_now(), "There was an error while executing command!");
             break;
         }
     }
