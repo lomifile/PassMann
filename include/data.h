@@ -61,9 +61,9 @@ typedef struct
 typedef struct
 {
     StatementType type;
-    Row row_to_insert; // only used by insert statement
-    Row row_to_filter; // only used by find statement
-    Row row_to_delete; // only used by delete statement
+    Row row_to_insert;      // only used by insert statement
+    Row row_to_filter;      // only used by find statement
+    uint32_t key_to_delete; // only used by delete statement
 } Statement;
 
 typedef struct

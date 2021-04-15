@@ -885,7 +885,7 @@ PrepareResult prepare_delete(InputBuffer *input_buffer, Statement *stmt, Table *
         return PREPARE_NEGATIVE_ID;
     }
 
-    strcpy(stmt->row_to_delete.id, id);
+    strcpy(stmt->key_to_delete, id);
 
     return PREPARE_SUCCESS;
 }
@@ -1176,19 +1176,16 @@ void leaf_node_insert(Cursor *ptr, uint32_t keyValue, Row *value)
     serialize_row(value, leaf_node_value(node, ptr->cell_num));
 }
 
-void leaf_node_delete(Cursor *ptr, uint32_t keyValue, Row *value)
+void leaf_node_delete(Cursor *ptr, uint32_t keyValue, void *node)
 {
-    uint32_t flag = 0;
-    void *node = get_page(ptr->table->pager, ptr->page_num);
     uint32_t num_cells = *leaf_node_num_cells(node);
-    for (uint32_t i = num_cells; i > ptr->cell_num; i--)
+    if (!(ptr->end_of_table))
     {
-        if (keyValue == value->id)
+        for (uint32_t i = num_cells; i > ptr->cell_num; i--)
         {
-            if (*(leaf_node_num_cells(ptr)) -= 1)
+            if (*(leaf_node_key(node, i)) == keyValue)
             {
-                memcpy(leaf_node_cell(node, i), leaf_node_cell(node, i - 1),
-                       LEAF_NODE_CELL_SIZE);
+                printf("Delete pass!");
             }
         }
     }
@@ -1196,23 +1193,11 @@ void leaf_node_delete(Cursor *ptr, uint32_t keyValue, Row *value)
 
 ExecuteResult execute_delete(Statement *stmt, Table *tbl)
 {
-    Row *row_to_delete = &(stmt->row_to_delete);
-    uint32_t key_to_delete = row_to_delete->id;
-    Cursor *ptr = table_find(tbl, key_to_delete);
+    Cursor *ptr = table_find(tbl, stmt->key_to_delete);
 
     void *node = get_page(tbl->pager, ptr->page_num);
-    uint32_t num_cells = *leaf_node_num_cells(node);
 
-    if (ptr->cell_num < num_cells)
-    {
-        uint32_t key_at_index = *leaf_node_key(node, ptr->cell_num);
-        if (key_at_index == key_to_delete)
-        {
-            return EXECUTE_DUPLICATE_KEY;
-        }
-    }
-
-    leaf_node_delete(ptr, row_to_delete->id, row_to_delete);
+    leaf_node_delete(ptr, stmt->key_to_delete, node);
 
     free(ptr);
 
