@@ -885,7 +885,7 @@ PrepareResult prepare_delete(InputBuffer *input_buffer, Statement *stmt, Table *
         return PREPARE_NEGATIVE_ID;
     }
 
-    strcpy(stmt->key_to_delete, id);
+    stmt->key_to_delete = id;
 
     return PREPARE_SUCCESS;
 }
@@ -979,11 +979,11 @@ PrepareResult prepare_statement(InputBuffer *input_buffer,
         append_log(time_now(), "Clear screen");
         return PREPARE_SUCCESS;
     }
-    // if (strncmp(input_buffer->buffer, "delete", 2) == 0)
-    // {
-    //     append_log(time_now(), "Delete testing");
-    //     return prepare_delete(input_buffer, stmt, tbl);
-    // }
+    if (strncmp(input_buffer->buffer, "delete", 2) == 0)
+    {
+        append_log(time_now(), "Delete testing");
+        return prepare_delete(input_buffer, stmt, tbl);
+    }
     return PREPARE_UNRECOGNIZED_STATEMENT;
 }
 
@@ -1176,17 +1176,17 @@ void leaf_node_insert(Cursor *ptr, uint32_t keyValue, Row *value)
     serialize_row(value, leaf_node_value(node, ptr->cell_num));
 }
 
-void leaf_node_delete(Cursor *ptr, uint32_t keyValue, void *node)
+void leaf_node_delete(Cursor *ptr, uint32_t keyValue)
 {
+    void *node = get_page(ptr->table->pager, ptr->page_num);
     uint32_t num_cells = *leaf_node_num_cells(node);
-    if (!(ptr->end_of_table))
+
+    for (uint32_t i = num_cells; i > ptr->cell_num; i--)
     {
-        for (uint32_t i = num_cells; i > ptr->cell_num; i--)
+        if (*(leaf_node_key(node, ptr->cell_num)) == keyValue)
         {
-            if (*(leaf_node_key(node, i)) == keyValue)
-            {
-                printf("Delete pass!");
-            }
+            memcpy(leaf_node_key(node, i - 1), leaf_node_key(node, i),
+                   LEAF_NODE_KEY_SIZE);
         }
     }
 }
@@ -1197,7 +1197,7 @@ ExecuteResult execute_delete(Statement *stmt, Table *tbl)
 
     void *node = get_page(tbl->pager, ptr->page_num);
 
-    leaf_node_delete(ptr, stmt->key_to_delete, node);
+    leaf_node_delete(ptr, stmt->key_to_delete);
 
     free(ptr);
 
