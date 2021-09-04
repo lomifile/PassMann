@@ -4,8 +4,6 @@ Simple password manager created in C for Linux \
 For now only .deb file is built.
 Created with CLion
 
-THIS PROJECT IS ARCHIVED DUE TO THE FACT I DON'T HAVE TIME MAINTAINING IT SINCE I HAVE FEW PROJECTS ALREADY ON THE SIDE. 
-
 # Installation Debian based distros
 
 Make sure to have Cmake and libsodium-dev installed as you won't be able to build.
