@@ -5,6 +5,8 @@
 #ifndef PASSMANN_ENCRYPTION_H
 #define PASSMANN_ENCRYPTION_H
 #include <sodium.h>
+#include <stdio.h>
+#include <string.h>
 
 #define CHUNK_SIZE 4096
 

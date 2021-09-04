@@ -1,17 +1,9 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <dirent.h>
-#include <string.h>
-
-#include "encryption.h"
-#include "database.h"
-#include "log.h"
+#include "main.h"
 
 void start_db(Table *tbl)
 {
     printf("\n"
            "MAKE SURE TO REMEBER YOUR MASTER PASSWORD AT ALL TIMES!\n"
-           "If you use CTRL - c to exit the program no data will be saved!\n"
            "\n"
            "\n");
     if (!(strlen(password) > 0))
@@ -82,7 +74,9 @@ void print_welcome()
 
 int main()
 {
+    init_raw_mode();
     print_welcome();
+ 
     append_log(time_now(), "PassMann started");
     int file = check_db_file(FILENAME);
 
