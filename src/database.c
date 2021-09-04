@@ -1180,15 +1180,15 @@ void leaf_node_delete(Cursor *ptr, uint32_t keyValue)
 {
     void *node = get_page(ptr->table->pager, ptr->page_num);
     uint32_t num_cells = *leaf_node_num_cells(node);
-
-    for (uint32_t i = num_cells; i > ptr->cell_num; i--)
+ 
+    if(*(leaf_node_key(node, ptr->cell_num)) == keyValue)
     {
-        if (*(leaf_node_key(node, ptr->cell_num)) == keyValue)
-        {
-            memcpy(leaf_node_key(node, i - 1), leaf_node_key(node, i),
-                   LEAF_NODE_KEY_SIZE);
-        }
+        memcpy(leaf_node_cell(node, ptr->cell_num - 1), leaf_node_cell(node, ptr->cell_num), 
+                LEAF_NODE_CELL_SIZE);
     }
+
+    *(leaf_node_num_cells(node)) -= 1;
+    *(leaf_node_key(node, ptr->cell_num + 1)) = keyValue - 1; 
 }
 
 ExecuteResult execute_delete(Statement *stmt, Table *tbl)
