@@ -20,4 +20,6 @@ InputBuffer *new_input_buffer();
 
 int int_input(int *input);
 
+char *read_line(FILE *f);
+
 #endif //PASSMANN_INPUT_H

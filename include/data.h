@@ -22,6 +22,7 @@ typedef enum
 {
     EXECUTE_SUCCESS,
     EXECUTE_DUPLICATE_KEY,
+    EXECUTE_ERROR,
 } ExecuteResult;
 
 typedef enum
@@ -44,6 +45,9 @@ typedef enum
     STATEMENT_INSERT,
     STATEMENT_SELECT,
     STATEMENT_SAVE_DATA,
+    STATEMENT_DELETE,
+    STATEMENT_FIND,
+    STATEMENT_CLEAR,
 } StatementType;
 
 typedef struct
@@ -57,7 +61,9 @@ typedef struct
 typedef struct
 {
     StatementType type;
-    Row row_to_insert; // only used by insert statement
+    Row row_to_insert;      // only used by insert statement
+    Row row_to_filter;      // only used by find statement
+    uint32_t key_to_delete; // only used by delete statement
 } Statement;
 
 typedef struct
