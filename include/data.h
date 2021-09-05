@@ -1,7 +1,3 @@
-//
-// Created by filip on 28. 02. 2021..
-//
-
 #ifndef PASSMANN_DATA_H
 #define PASSMANN_DATA_H
 
@@ -48,6 +44,7 @@ typedef enum
     STATEMENT_DELETE,
     STATEMENT_FIND,
     STATEMENT_CLEAR,
+    STATEMENT_EXIT
 } StatementType;
 
 typedef struct
@@ -93,7 +90,5 @@ typedef enum
     NODE_INTERNAL,
     NODE_LEAF
 } NodeType;
-
-char password[50];
 
 #endif //PASSMANN_DATA_H

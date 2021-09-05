@@ -1,5 +1,7 @@
 #include "main.h"
 
+char password[50];
+
 static void start_db(Table *tbl)
 {
     printf("\n"

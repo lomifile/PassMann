@@ -1,18 +1,4 @@
-#include <errno.h>
-#include <fcntl.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sodium/randombytes.h>
-
 #include "database.h"
-#include "log.h"
-#include "input.h"
-#include "encryption.h"
 
 const uint32_t ID_SIZE = size_of_attribute(Row, id);
 const uint32_t USERNAME_SIZE = size_of_attribute(Row, username);
@@ -611,7 +597,6 @@ void print_help()
            "Meta commands: \n"
            ".btree -> Shows you the B-tree structure of your database\n"
            ".constants -> Shows you the constants\n"
-           ".exit -> Quits the program and flushes the database\n"
            ".passgen -> Generates password if you want one\n"
            ".log -> Shows you the log of usage\n"
            ".lastid -> Prints the last ID in table\n"
@@ -804,15 +789,7 @@ uint32_t get_last_id(Table *tbl)
 
 MetaCommandResult do_meta_command(InputBuffer *input_buffer, Table *tbl)
 {
-    if (strcmp(input_buffer->buffer, ".exit") == 0)
-    {
-        close_input_buffer(input_buffer);
-        db_close(tbl);
-        append_log(time_now(), "PassMann exit");
-        printf("Exiting Passmann\n");
-        exit(EXIT_SUCCESS);
-    }
-    else if (strcmp(input_buffer->buffer, ".btree") == 0)
+    if (strcmp(input_buffer->buffer, ".btree") == 0)
     {
         printf("Tree:\n");
         print_tree(tbl->pager, 0, 0);
@@ -956,7 +933,7 @@ PrepareResult prepare_statement(InputBuffer *input_buffer,
         append_log(time_now(), "Insert new data");
         return prepare_insert(input_buffer, stmt, tbl);
     }
-    if (strcmp(input_buffer->buffer, "select") == 0)
+    if ((strcmp(input_buffer->buffer, "select") == 0) || (strcmp(input_buffer->buffer, "s") == 0))
     {
         stmt->type = STATEMENT_SELECT;
         append_log(time_now(), "Selected data");
@@ -967,6 +944,11 @@ PrepareResult prepare_statement(InputBuffer *input_buffer,
         stmt->type = STATEMENT_SAVE_DATA;
         append_log(time_now(), "Saved data");
         return PREPARE_SUCCESS;
+    }
+    if((strcmp(input_buffer->buffer, "exit") == 0) || (strcmp(input_buffer->buffer, "e") == 0))
+    {
+        append_log(time_now(), "Exit");
+        exit(EXIT_SUCCESS);
     }
     if (strncmp(input_buffer->buffer, "find", 2) == 0)
     {

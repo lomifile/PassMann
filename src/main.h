@@ -15,4 +15,6 @@
 #include "log.h"
 #include "RawMode.h"
 
+extern char password[50];
+
 #endif //PASSMANN_MAIN_H

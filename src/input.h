@@ -1,9 +1,20 @@
-//
-// Created by filip on 28. 02. 2021..
-//
-
 #ifndef PASSMANN_INPUT_H
 #define PASSMANN_INPUT_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdint.h>
+#include <time.h>
+#include <malloc.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <stdbool.h>
+#include <errno.h>
+#include <stdarg.h>
+
+#include "log.h"
 
 typedef struct
 {

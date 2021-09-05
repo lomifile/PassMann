@@ -1,16 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <dirent.h>
-#include <string.h>
-#include <time.h>
-#include <malloc.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <stdint.h>
-
 #include "log.h"
 
 void create_log_file()

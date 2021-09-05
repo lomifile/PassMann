@@ -5,8 +5,23 @@
 #ifndef PASSMANN_DATABASE_H
 #define PASSMANN_DATABASE_H
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sodium/randombytes.h>
+
 #include <include/data.h>
 #include "input.h"
+#include "log.h"
+#include "input.h"
+#include "encryption.h"
+#include "main.h"
 
 #define size_of_attribute(Struct, Attribute) sizeof(((Struct *)0)->Attribute)
 #define ROW_TABLE_HEADER printf("%10s|%10s|%10s|%20s|\n", "ID", "Usecase", "Username", "Password")
