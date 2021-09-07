@@ -45,9 +45,9 @@ void display_log()
         free(line);
 }
 
-void append_log(char *date, char *input)
+void append_log(const char *date, const char *input)
 {
-    strtok(date, "\n");
+    strtok((char *)date, "\n");
     FILE *fp = fopen(LOG_FILE, "a");
     if (fp == NULL)
         exit(EXIT_FAILURE);

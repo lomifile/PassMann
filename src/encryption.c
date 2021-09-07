@@ -58,7 +58,7 @@ int decrypt(const char *target_file, const char *source_file,
     fread(header, 1, sizeof header, fp_s);
     if (crypto_secretstream_xchacha20poly1305_init_pull(&st, header, key) != 0)
     {
-        append_log((char*)time_now(), "Incomplete header");
+        append_log(time_now(), "Incomplete header");
         goto ret; /* incomplete header */
     }
     do
@@ -68,12 +68,12 @@ int decrypt(const char *target_file, const char *source_file,
         if (crypto_secretstream_xchacha20poly1305_pull(&st, buf_out, &out_len, &tag,
                                                        buf_in, rlen, NULL, 0) != 0)
         {
-            append_log((char*)time_now(), "Corrupted chunk");
+            append_log(time_now(), "Corrupted chunk");
             goto ret; /* corrupted chunk */
         }
         if (tag == crypto_secretstream_xchacha20poly1305_TAG_FINAL && !eof)
         {
-            append_log((char*)time_now(), "Premature end (end of file reached before the end of the stream)");
+            append_log(time_now(), "Premature end (end of file reached before the end of the stream)");
             goto ret; /* premature end (end of file reached before the end of the stream) */
         }
         fwrite(buf_out, 1, (size_t)out_len, fp_t);
