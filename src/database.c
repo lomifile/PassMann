@@ -14,6 +14,8 @@
 #include "input.h"
 #include "encryption.h"
 
+char password[50];
+
 const uint32_t ID_SIZE = size_of_attribute(Row, id);
 const uint32_t USERNAME_SIZE = size_of_attribute(Row, username);
 const uint32_t PASSWORD_SIZE = size_of_attribute(Row, password);

@@ -22,6 +22,7 @@ extern Pager pager;
 extern Table table;
 extern Cursor cursor;
 extern NodeType Node_Type;
+extern char password[50];
 
 ExecuteResult execute_statement(Statement *stmt, Table *tbl);
 
