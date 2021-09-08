@@ -1,46 +1,22 @@
-# PassMann
+# <strong>PassMann</strong>
 
-Simple password manager created in C for Linux \
-For now only .deb file is built.
-Created with CLion
+Simple password manager created in C for Linux 
+Made using simple database formfactor with libsoduim encryption.
 
-# Installation Debian based distros
+Contributions are welcome!
 
-Make sure to have Cmake and libsodium-dev installed as you won't be able to build.
+# Installation
 
-```shell
-sudo apt update
-sudo apt install cmake libsodium-dev
-```
+## Debian/Ubuntu
 
-Then run:
+For Debian/Ubuntu you can use .deb file which you can download [here](https://github.com/fivanusec/PassMann/releases) 
 
-```shell
-./build.sh
-```
+Also if you wanna build it from source and install it yourself you can use ```install.sh``` script and it will install it onto your system or you can use ```build.sh``` and create .deb file which will be in <strong>build/</strong> folder.
 
-It will simply build the project, after that navigate to build folder and
-simply run .deb file that is built or run:
+## Other distros(temporarry)
 
-```shell
-cd build/
-sudo dpkg -i PassMann-[version]-Linux.deb
-```
+Use ```install.sh``` script.
 
-If you get dependencies error just run:
+# Problems
 
-```shell
-sudo apt install -f
-```
-
-# Installation other distors(for now)
-
-As Debian based distros make sure to install cmake and libsodium-dev.
-
-Then run:
-
-```shell
-./install.sh
-```
-
-The script will be compiled and installed onto your system.
+For any problem with passmann feel free to open issue. 

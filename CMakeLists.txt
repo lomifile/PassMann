@@ -12,6 +12,19 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_BUILD_TYPE Debug)
 
+LIST(APPEND included_headers 
+    "stdio.h" "stdarg.h" "stdlib.h" "time.h" "string.h" "errno.h" "fcntl.h" "unistd.h" "termios.h" "dirent.h" 
+    "malloc.h" "sys/stat.h" "stdbool.h" "stdint.h" "limits.h")
+
+foreach(header ${included_headers}) 
+   find_path( header PATHS /usr/include)
+    if(NOT header)
+        message(FATAL_ERROR "Can't find folder containing ${header}")
+    else()
+        message("-- ${header} -- found")
+    endif()
+endforeach()
+
 install(TARGETS PassMann
         DESTINATION /usr/bin)
 
